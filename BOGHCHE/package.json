@@ -1,1 +1,11 @@
-{"name":"boghche","version":"1.0.0","private":true,"type":"module","scripts":{"start":"node serve.mjs","dev":"node serve.mjs","check":"node --check dist/app.js"}}
+{
+  "name": "boghche",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node serve.mjs",
+    "dev": "node serve.mjs",
+    "check": "node --check dist/app.js && node --check dist/theme.js && node --check dist/features.js"
+  }
+}

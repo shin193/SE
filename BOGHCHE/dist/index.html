@@ -4,7 +4,7 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#536144"><meta name="description" content="بقچه؛ مجموعه‌ای از کیف‌ها و اکسسوری‌های پارچه‌ای برای لحظه‌های سادهٔ زندگی. نسخهٔ اولیهٔ فروشگاه.">
   <title>بقچه | با نخ، با عشق، برای زندگی</title>
-  <link rel="icon" href="assets/favicon.svg"><link rel="preload" href="assets/vazirmatn.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="style.css">
+  <link rel="icon" href="assets/favicon.svg"><link rel="preload" href="assets/vazirmatn.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="features.css"><script src="theme.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">رفتن به محتوای اصلی</a>
@@ -17,9 +17,9 @@
         <div class="nav-dropdown"><button id="products-menu" aria-expanded="false" aria-controls="category-menu">محصولات <span data-icon="chevron-down"></span></button><div class="dropdown" id="category-menu" hidden></div></div>
         <a href="#catalog" data-new-link>تازه‌دوخته‌ها <span class="nav-dot"></span></a><a href="#story">داستان ما</a>
       </nav>
-      <div class="header-actions">
+      <div class="header-actions"><button class="theme-trigger" data-action="theme" aria-label="انتخاب رنگ تم سایت"><span aria-hidden="true">◐</span><span>رنگ تم</span></button>
         <button class="icon-button" data-action="search" aria-label="جست‌وجوی محصولات"><span data-icon="search"></span></button>
-        <button class="account-button" data-action="account"><span data-icon="user"></span><span id="account-label">ورود / ثبت‌نام</span></button>
+        <button class="account-button" data-action="account" aria-label="ورود یا ثبت‌نام"><span data-icon="user"></span><span id="account-label">ورود / ثبت‌نام</span></button>
         <span class="action-divider"></span>
         <button class="icon-button" data-action="favorites" aria-label="علاقه‌مندی‌ها"><span data-icon="heart"></span><span class="small-count" id="favorite-count" hidden>۰</span></button>
         <button class="icon-button cart-button" data-action="cart" aria-label="سبد خرید"><span data-icon="bag"></span><span class="cart-count" id="cart-count">۰</span></button>
@@ -65,8 +65,9 @@
     </section>
     <section class="wrapper benefits-section" aria-label="امکانات انتخاب محصولات"><div><span data-icon="grid"></span><h3>هفت دسته، یک دنیای رنگی</h3><p>پیدا کردن همراه پارچه‌ای برای هر روز</p></div><div><span data-icon="heart"></span><h3>برای بعد نگه دار</h3><p>ذخیرهٔ علاقه‌مندی‌ها در همین مرورگر</p></div><div><span data-icon="bag"></span><h3>انتخاب با خیالِ جمع</h3><p>مرور تعداد و جمع قیمت در سبد خرید</p></div></section>
   </main>
+  <main id="product-page" class="wrapper" hidden tabindex="-1"></main>
   <footer><div class="wrapper footer-main"><div class="footer-brand"><a class="brand" href="#"><span class="brand-mark">✳</span><span><b data-brand>بقچه</b><small>روایتِ نخ و زندگی</small></span></a><p>برای روزهایی که با جزئیات کوچک،<br>قشنگ‌تر می‌شوند.</p></div><div><h3>در بقچه بگرد</h3><a href="#catalog" id="footer-all">همه محصولات</a><a href="#categories">دسته‌بندی‌ها</a><a href="#story">داستان بقچه</a></div><div><h3>پیش از خرید</h3><button data-info="rules">قوانین خرید</button><button data-info="shipping">ارسال و مرجوعی</button><button data-info="privacy">حریم خصوصی</button></div><div><h3>در ارتباط باشیم</h3><button data-info="contact">تماس با ما <span data-icon="arrow-up-left"></span></button><button data-info="social">اینستاگرام <span data-icon="instagram"></span></button><p class="muted">راه‌های ارتباطی به‌زودی تکمیل می‌شوند.</p></div></div><div class="wrapper footer-bottom"><span>بقچه © <span id="year">۱۴۰۵</span> — ساخته‌شده با حوصله</span><span>نسخهٔ نمایشی • خرید و پرداخت واقعی فعال نیست</span><a href="#">بازگشت به بالا ↑</a></div></footer>
   <dialog id="modal" aria-labelledby="modal-title"><div class="modal-head"><h2 id="modal-title"></h2><button class="icon-button" id="close-modal" aria-label="بستن پنجره"><span data-icon="x"></span></button></div><div id="modal-content"></div></dialog>
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js" defer></script>
+  <script src="app.js" defer></script><script src="features.js" defer></script>
 </body></html>
