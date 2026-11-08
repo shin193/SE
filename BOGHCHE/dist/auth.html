@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#536144"><meta name="description" content="ورود، ثبت‌نام و بازیابی رمز حساب بقچه"><title>ورود و ثبت‌نام | بقچه</title>
-<link rel="icon" href="assets/favicon.svg"><link rel="preload" href="assets/vazirmatn.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="features.css"><link rel="stylesheet" href="auth.css"><link rel="stylesheet" href="auth-polish.css"><script src="theme.js"></script><script src="auth-client.js" defer></script><script src="auth.js" defer></script>
+<link rel="icon" href="assets/favicon.svg"><link rel="preload" href="assets/vazirmatn.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="features.css"><link rel="stylesheet" href="auth.css"><link rel="stylesheet" href="auth-polish.css"><link rel="stylesheet" href="mascot.css"><script src="theme.js"></script><script src="auth-client.js" defer></script><script src="mascot-motion.js" defer></script><script src="mascot.js" defer></script><script src="auth.js" defer></script>
 </head>
 <body class="auth-body">
 <a class="skip-link" href="#auth-form">رفتن به فرم</a>
@@ -10,18 +10,18 @@
 <main class="auth-shell">
  <section class="auth-panel" aria-labelledby="auth-title">
   <svg class="frame-stitch" viewBox="0 0 500 740" preserveAspectRatio="none" aria-hidden="true"><defs><mask id="frame-reveal-mask"><rect class="frame-reveal" x="8" y="8" width="484" height="724" rx="25" pathLength="100"/></mask></defs><rect class="frame-dashes" x="8" y="8" width="484" height="724" rx="25" pathLength="100" mask="url(#frame-reveal-mask)"/></svg>
-  <div class="form-heading"><h1 id="auth-title">ورود</h1><p id="auth-subtitle" hidden></p><div id="auth-mascot" class="greeting-stage" aria-hidden="true"><svg class="spool-character" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
-<ellipse cx="72" cy="128" rx="34" ry="5" fill="var(--olive)" opacity=".1"/>
-<g class="spool-legs" fill="none" stroke="var(--dark)" stroke-width="5" stroke-linecap="round"><path d="M57 106L53 123H43M84 106L89 123H99"/></g>
-<path d="M42 66Q25 68 24 86" fill="none" stroke="var(--dark)" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="87" r="5" fill="var(--cream)" stroke="var(--olive)" stroke-width="2"/>
-<g class="spool-wave"><path d="M101 64Q116 63 117 44" fill="none" stroke="var(--dark)" stroke-width="4" stroke-linecap="round"/><path d="M112 45Q108 33 112 32L116 38Q115 24 119 25L120 37Q124 27 126 30L123 40Q131 34 131 38L126 47Q119 53 114 47Z" fill="var(--cream)" stroke="var(--olive)" stroke-width="1.6" stroke-linejoin="round"/></g>
-<g class="spool-head"><path d="M45 30Q69 20 96 30L99 104Q69 114 42 104Z" fill="var(--olive)"/><path d="M44 35Q70 42 97 35M44 43Q70 50 97 43M44 51Q70 58 98 51M43 88Q70 95 98 88M43 97Q70 104 99 97" fill="none" stroke="var(--paper)" stroke-opacity=".32" stroke-width="2.3"/>
-<path d="M39 29Q70 17 101 29L100 35Q70 45 39 35Z" fill="var(--cream)" stroke="var(--olive)" stroke-width="1.5"/><ellipse cx="70" cy="28" rx="31" ry="9" fill="var(--cream)" stroke="var(--olive)" stroke-width="1.5"/><ellipse cx="70" cy="28" rx="9" ry="3.5" fill="var(--rust)" opacity=".65"/>
-<path d="M38 102Q70 111 103 102L103 110Q70 121 38 110Z" fill="var(--cream)" stroke="var(--olive)" stroke-width="1.5"/>
-<path d="M55 63Q60 59 64 62M78 62Q83 59 87 63" fill="none" stroke="var(--dark)" stroke-width="2" stroke-linecap="round"/>
-<g class="spool-eyes"><ellipse cx="61" cy="70" rx="3.6" ry="5" fill="var(--paper)"/><ellipse cx="83" cy="70" rx="3.6" ry="5" fill="var(--paper)"/><circle cx="62" cy="71" r="2" fill="var(--ink)"/><circle cx="84" cy="71" r="2" fill="var(--ink)"/></g>
-<ellipse cx="52" cy="79" rx="5" ry="2.5" fill="var(--rust)" opacity=".7"/><ellipse cx="92" cy="79" rx="5" ry="2.5" fill="var(--rust)" opacity=".7"/><path d="M65 81Q72 88 80 81" fill="none" stroke="var(--paper)" stroke-width="2" stroke-linecap="round"/>
-<path d="M96 98Q118 105 110 114" fill="none" stroke="var(--rust)" stroke-width="1.8" stroke-linecap="round"/></g></svg></div></div>
+  <div class="form-heading"><h1 id="auth-title">ورود</h1><p id="auth-subtitle" hidden></p><div class="mascot-lane"><button id="auth-mascot" class="mascot-button" type="button" aria-label="قرقرهٔ بازیگوش؛ برای واکنش کلیک کن یا Enter و Space را بزن"><span class="mascot-ground" aria-hidden="true"></span><span class="mascot-hover"><span class="mascot-pose"><svg class="spool-character" aria-hidden="true" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+
+<g class="spool-legs" fill="none" stroke="var(--spool-ink)" stroke-width="5" stroke-linecap="round"><path class="spool-leg-left" d="M57 106L53 123H43"/><path class="spool-leg-right" d="M84 106L89 123H99"/></g>
+<g class="spool-left-arm"><path d="M42 66Q25 68 24 86" fill="none" stroke="var(--spool-ink)" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="87" r="5" fill="var(--spool-cap)" stroke="var(--spool-body)" stroke-width="2"/></g>
+<g class="spool-wave"><path d="M101 64Q116 63 117 44" fill="none" stroke="var(--spool-ink)" stroke-width="4" stroke-linecap="round"/><path d="M112 45Q108 33 112 32L116 38Q115 24 119 25L120 37Q124 27 126 30L123 40Q131 34 131 38L126 47Q119 53 114 47Z" fill="var(--spool-cap)" stroke="var(--spool-body)" stroke-width="1.6" stroke-linejoin="round"/></g>
+<g class="spool-head"><path d="M45 30Q69 20 96 30L99 104Q69 114 42 104Z" fill="var(--spool-body)"/><path d="M44 35Q70 42 97 35M44 43Q70 50 97 43M44 51Q70 58 98 51M43 88Q70 95 98 88M43 97Q70 104 99 97" fill="none" stroke="var(--spool-ivory)" stroke-opacity=".32" stroke-width="2.3"/>
+<path d="M39 29Q70 17 101 29L100 35Q70 45 39 35Z" fill="var(--spool-cap)" stroke="var(--spool-body)" stroke-width="1.5"/><ellipse cx="70" cy="28" rx="31" ry="9" fill="var(--spool-cap)" stroke="var(--spool-body)" stroke-width="1.5"/><ellipse cx="70" cy="28" rx="9" ry="3.5" fill="var(--spool-coral)" opacity=".65"/>
+<path d="M38 102Q70 111 103 102L103 110Q70 121 38 110Z" fill="var(--spool-cap)" stroke="var(--spool-body)" stroke-width="1.5"/>
+<path d="M55 63Q60 59 64 62M78 62Q83 59 87 63" fill="none" stroke="var(--spool-ink)" stroke-width="2" stroke-linecap="round"/>
+<g class="spool-eyes"><ellipse cx="61" cy="70" rx="3.6" ry="5" fill="var(--spool-ivory)"/><ellipse cx="83" cy="70" rx="3.6" ry="5" fill="var(--spool-ivory)"/><circle class="spool-pupil" cx="62" cy="71" r="2" fill="var(--spool-ink)"/><circle class="spool-pupil" cx="84" cy="71" r="2" fill="var(--spool-ink)"/></g>
+<ellipse class="spool-cheek" cx="52" cy="79" rx="5" ry="2.5" fill="var(--spool-coral)" opacity=".7"/><ellipse class="spool-cheek" cx="92" cy="79" rx="5" ry="2.5" fill="var(--spool-coral)" opacity=".7"/><path class="spool-smile" d="M65 81Q72 88 80 81" fill="none" stroke="var(--spool-ivory)" stroke-width="2" stroke-linecap="round"/>
+<path d="M96 98Q118 105 110 114" fill="none" stroke="var(--spool-coral)" stroke-width="1.8" stroke-linecap="round"/></g></svg></span></span></button></div></div>
   <div class="auth-tabs" role="tablist" aria-label="انتخاب فرم"><span class="tab-seam" aria-hidden="true"></span><button id="login-tab" role="tab" aria-selected="true" aria-controls="auth-content" data-mode="login">ورود</button><button id="signup-tab" role="tab" aria-selected="false" aria-controls="auth-content" tabindex="-1" data-mode="signup">ثبت‌نام</button></div>
   <p class="auth-demo" id="auth-disclosure"><span aria-hidden="true">◌</span> حالت نمایشی؛ حساب یا ورود واقعی انجام نمی‌شود.</p>
   <div id="auth-content" role="tabpanel" aria-labelledby="login-tab">

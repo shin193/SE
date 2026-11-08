@@ -1,10 +1,4 @@
-let spoolGreetingTimer;
-function playSpoolGreeting(mode){
- const stage=document.querySelector('#auth-mascot');clearTimeout(spoolGreetingTimer);stage.classList.remove('is-greeting');
- if(mode!=='login'&&mode!=='signup')return;
- stage.dataset.greeting=mode;void stage.offsetWidth;stage.classList.add('is-greeting');
- spoolGreetingTimer=setTimeout(()=>stage.classList.remove('is-greeting'),2700);
-}
+function playSpoolGreeting(mode){window.dispatchEvent(new CustomEvent('boghche-greeting',{detail:mode}));}
 const authForm=document.querySelector('#auth-form');
 const authFields={name:document.querySelector('#auth-name'),email:document.querySelector('#auth-email'),password:document.querySelector('#auth-password'),confirm:document.querySelector('#auth-confirm')};
 let authMode=null, authBusy=false;
