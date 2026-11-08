@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#536144"><meta name="description" content="بقچه؛ مجموعه‌ای از کیف‌ها و اکسسوری‌های پارچه‌ای برای لحظه‌های سادهٔ زندگی. نسخهٔ اولیهٔ فروشگاه.">
+  <title>بقچه | با نخ، با عشق، برای زندگی</title>
+  <link rel="icon" href="assets/favicon.svg"><link rel="preload" href="assets/vazirmatn.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">رفتن به محتوای اصلی</a>
+  <div class="announcement"><span>چیزهای کوچک، حالِ خوبِ هر روز</span><span class="announcement-side">نسخهٔ اول مجموعهٔ بقچه <i>✳</i></span></div>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="#" aria-label="بقچه، صفحه اصلی"><span class="brand-mark" aria-hidden="true">✳</span><span><b data-brand>بقچه</b><small>روایتِ نخ و زندگی</small></span></a>
+      <nav class="desktop-nav" aria-label="منوی اصلی">
+        <a class="active" href="#">خانه</a>
+        <div class="nav-dropdown"><button id="products-menu" aria-expanded="false" aria-controls="category-menu">محصولات <span data-icon="chevron-down"></span></button><div class="dropdown" id="category-menu" hidden></div></div>
+        <a href="#catalog" data-new-link>تازه‌دوخته‌ها <span class="nav-dot"></span></a><a href="#story">داستان ما</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-button" data-action="search" aria-label="جست‌وجوی محصولات"><span data-icon="search"></span></button>
+        <button class="account-button" data-action="account"><span data-icon="user"></span><span id="account-label">ورود / ثبت‌نام</span></button>
+        <span class="action-divider"></span>
+        <button class="icon-button" data-action="favorites" aria-label="علاقه‌مندی‌ها"><span data-icon="heart"></span><span class="small-count" id="favorite-count" hidden>۰</span></button>
+        <button class="icon-button cart-button" data-action="cart" aria-label="سبد خرید"><span data-icon="bag"></span><span class="cart-count" id="cart-count">۰</span></button>
+        <button class="icon-button mobile-menu-button" data-action="menu" aria-label="باز کردن منو" aria-expanded="false" aria-controls="mobile-nav"><span data-icon="menu"></span></button>
+      </div>
+    </div>
+    <nav id="mobile-nav" aria-label="منوی موبایل" hidden></nav>
+  </header>
+  <main id="main">
+    <section class="hero wrapper" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow"><span></span> از دلِ پارچه، برای دلِ زندگی</div>
+        <h1 id="hero-title">روزمرگی‌ات را<br>کمی <em>دست‌دوز</em> کن.</h1>
+        <p>یک کیف برای همراهی، یک پیش‌بند برای خلق‌کردن.<br class="desktop-only"> اینجا هر تکه پارچه، شروع یک داستان تازه است.</p>
+        <div class="hero-buttons"><a class="button primary" href="#catalog">مشاهده محصولات <span data-icon="arrow-left"></span></a><a class="button text-button" href="#categories">مشاهده دسته‌بندی‌ها <span data-icon="arrow-down"></span></a></div>
+        <div class="hero-footnote"><span class="tiny-spool" aria-hidden="true">⌁</span><span>رنگ‌های آرام، بافت‌های دوست‌داشتنی، جزئیات کوچک</span></div>
+      </div>
+      <div class="hero-art">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+        <span class="art-label">THE ART OF EVERYDAY</span>
+        <div class="machine-stage"><canvas id="sewing-machine" role="img" aria-label="چرخ خیاطی پیکسلی تعاملی؛ با حرکت نشانگر ذرات آن جابه‌جا می‌شوند"></canvas></div>
+        <div class="thread-line" aria-hidden="true"><svg viewBox="0 0 540 170"><path d="M15 120 C100 5 205 200 310 80 S430 15 520 85"/></svg></div>
+        <div class="art-seal"><span>یک نخ</span><b>هزار قصه</b><span>✳</span></div>
+        <div class="swatch swatch-one"></div><div class="swatch swatch-two"></div><div class="swatch swatch-three"></div>
+        <button id="stitch-button" class="machine-hint"><span class="live-dot"></span> کمی نزدیک‌تر بیا؛ نخ‌ها زنده‌اند <span data-icon="sparkles"></span></button>
+      </div>
+    </section>
+    <div class="craft-strip"><div class="wrapper"><span>برای گوشه‌گوشهٔ زندگی</span><i>✳</i><span>بافت‌هایی که دوستشان داریم</span><i>✳</i><span>زیبایی در جزئیات ساده</span><i>✳</i><span>از یک تکه پارچه شروع می‌شود</span></div></div>
+    <section class="wrapper categories-section" id="categories" aria-labelledby="categories-title">
+      <div class="section-heading"><div><span class="section-kicker">دنیای پارچه‌ای ما</span><h2 id="categories-title">برای هر گوشه از روزت</h2></div><a class="subtle-link" href="#catalog" id="all-categories">همه محصولات <span data-icon="arrow-left"></span></a></div>
+      <div class="category-grid" id="category-grid"></div>
+    </section>
+    <section class="catalog-section" id="catalog" aria-labelledby="catalog-title"><div class="wrapper">
+      <div class="section-heading"><div><span class="section-kicker">کوچک، کاربردی، دوست‌داشتنی</span><h2 id="catalog-title">دوخته‌های دوست‌داشتنی</h2></div><div class="collection-tabs" role="tablist" aria-label="مجموعه محصولات"><button role="tab" aria-selected="true" data-collection="featured">منتخب‌ها</button><button role="tab" aria-selected="false" data-collection="new">تازه‌دوخته‌ها</button><button role="tab" aria-selected="false" data-collection="all">همه محصولات</button></div></div>
+      <div class="catalog-tools"><div class="filter-chips" id="filter-chips"></div><label class="sort-label">چیدمان <select id="sort" aria-label="مرتب‌سازی محصولات"><option value="default">پیشنهاد بقچه</option><option value="low">قیمت: کم به زیاد</option><option value="high">قیمت: زیاد به کم</option><option value="new">جدیدترین</option></select></label></div>
+      <div class="result-line"><span id="result-count"></span><span>تصاویر، مشخصات و قیمت‌ها نمونه هستند.</span></div>
+      <div class="product-grid" id="product-grid"></div>
+      <div class="catalog-bottom"><button class="button outline" id="show-all">دیدن همهٔ دوخته‌ها <span data-icon="arrow-left"></span></button><span>هر کدام، همراه یک روزِ تازه</span></div>
+    </div></section>
+    <section class="wrapper story-section" id="story" aria-labelledby="story-title">
+      <div class="story-image"><div class="product-photo" style="--col:2;--row:2" role="img" aria-label="پارچه‌های زیتونی و کرم، قیچی و قرقره‌های نخ"></div><span class="story-note">قصه از همین‌جا شروع می‌شود... <span>⌁</span></span></div>
+      <div class="story-copy"><span class="section-kicker">کمی از دنیای بقچه</span><h2 id="story-title">ما به چیزهای ساده<br>دل می‌بندیم.</h2><p>به لمس پارچه، به کنار هم نشستن رنگ‌ها و به خط دوختی که یک ایده را واقعی می‌کند. بقچه این گوشهٔ کوچک است؛ جایی برای کشف وسایل پارچه‌ای که در زندگی روزمره جا می‌گیرند.</p><div class="process"><span><b>۰۱</b> خیال و طرح</span><i>····</i><span><b>۰۲</b> رنگ و پارچه</span><i>····</i><span><b>۰۳</b> نخ و دوخت</span></div><button class="subtle-link" data-info="story">آشنایی با این مجموعه <span data-icon="arrow-left"></span></button></div>
+    </section>
+    <section class="wrapper benefits-section" aria-label="امکانات انتخاب محصولات"><div><span data-icon="grid"></span><h3>هفت دسته، یک دنیای رنگی</h3><p>پیدا کردن همراه پارچه‌ای برای هر روز</p></div><div><span data-icon="heart"></span><h3>برای بعد نگه دار</h3><p>ذخیرهٔ علاقه‌مندی‌ها در همین مرورگر</p></div><div><span data-icon="bag"></span><h3>انتخاب با خیالِ جمع</h3><p>مرور تعداد و جمع قیمت در سبد خرید</p></div></section>
+  </main>
+  <footer><div class="wrapper footer-main"><div class="footer-brand"><a class="brand" href="#"><span class="brand-mark">✳</span><span><b data-brand>بقچه</b><small>روایتِ نخ و زندگی</small></span></a><p>برای روزهایی که با جزئیات کوچک،<br>قشنگ‌تر می‌شوند.</p></div><div><h3>در بقچه بگرد</h3><a href="#catalog" id="footer-all">همه محصولات</a><a href="#categories">دسته‌بندی‌ها</a><a href="#story">داستان بقچه</a></div><div><h3>پیش از خرید</h3><button data-info="rules">قوانین خرید</button><button data-info="shipping">ارسال و مرجوعی</button><button data-info="privacy">حریم خصوصی</button></div><div><h3>در ارتباط باشیم</h3><button data-info="contact">تماس با ما <span data-icon="arrow-up-left"></span></button><button data-info="social">اینستاگرام <span data-icon="instagram"></span></button><p class="muted">راه‌های ارتباطی به‌زودی تکمیل می‌شوند.</p></div></div><div class="wrapper footer-bottom"><span>بقچه © <span id="year">۱۴۰۵</span> — ساخته‌شده با حوصله</span><span>نسخهٔ نمایشی • خرید و پرداخت واقعی فعال نیست</span><a href="#">بازگشت به بالا ↑</a></div></footer>
+  <dialog id="modal" aria-labelledby="modal-title"><div class="modal-head"><h2 id="modal-title"></h2><button class="icon-button" id="close-modal" aria-label="بستن پنجره"><span data-icon="x"></span></button></div><div id="modal-content"></div></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js" defer></script>
+</body></html>
