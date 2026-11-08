@@ -19,7 +19,7 @@
       </nav>
       <div class="header-actions"><button class="theme-trigger" data-action="theme" aria-label="انتخاب رنگ تم سایت"><span aria-hidden="true">◐</span><span>رنگ تم</span></button>
         <button class="icon-button" data-action="search" aria-label="جست‌وجوی محصولات"><span data-icon="search"></span></button>
-        <button class="account-button" data-action="account" aria-label="ورود یا ثبت‌نام"><span data-icon="user"></span><span id="account-label">ورود / ثبت‌نام</span></button>
+        <a class="account-button" href="auth.html?mode=login" target="_blank" rel="noopener" aria-label="ورود یا ثبت‌نام، در تب جدید"><span data-icon="user"></span><span id="account-label">ورود / ثبت‌نام</span></a>
         <span class="action-divider"></span>
         <button class="icon-button" data-action="favorites" aria-label="علاقه‌مندی‌ها"><span data-icon="heart"></span><span class="small-count" id="favorite-count" hidden>۰</span></button>
         <button class="icon-button cart-button" data-action="cart" aria-label="سبد خرید"><span data-icon="bag"></span><span class="cart-count" id="cart-count">۰</span></button>
@@ -69,5 +69,5 @@
   <footer><div class="wrapper footer-main"><div class="footer-brand"><a class="brand" href="#"><span class="brand-mark">✳</span><span><b data-brand>بقچه</b><small>روایتِ نخ و زندگی</small></span></a><p>برای روزهایی که با جزئیات کوچک،<br>قشنگ‌تر می‌شوند.</p></div><div><h3>در بقچه بگرد</h3><a href="#catalog" id="footer-all">همه محصولات</a><a href="#categories">دسته‌بندی‌ها</a><a href="#story">داستان بقچه</a></div><div><h3>پیش از خرید</h3><button data-info="rules">قوانین خرید</button><button data-info="shipping">ارسال و مرجوعی</button><button data-info="privacy">حریم خصوصی</button></div><div><h3>در ارتباط باشیم</h3><button data-info="contact">تماس با ما <span data-icon="arrow-up-left"></span></button><button data-info="social">اینستاگرام <span data-icon="instagram"></span></button><p class="muted">راه‌های ارتباطی به‌زودی تکمیل می‌شوند.</p></div></div><div class="wrapper footer-bottom"><span>بقچه © <span id="year">۱۴۰۵</span> — ساخته‌شده با حوصله</span><span>نسخهٔ نمایشی • خرید و پرداخت واقعی فعال نیست</span><a href="#">بازگشت به بالا ↑</a></div></footer>
   <dialog id="modal" aria-labelledby="modal-title"><div class="modal-head"><h2 id="modal-title"></h2><button class="icon-button" id="close-modal" aria-label="بستن پنجره"><span data-icon="x"></span></button></div><div id="modal-content"></div></dialog>
   <div id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js" defer></script><script src="features.js" defer></script>
+  <script src="auth-client.js" defer></script><script src="app.js" defer></script><script src="features.js" defer></script><script src="account-sync.js" defer></script>
 </body></html>
