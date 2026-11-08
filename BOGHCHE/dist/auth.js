@@ -1,16 +1,23 @@
+let spoolGreetingTimer;
+function playSpoolGreeting(mode){
+ const stage=document.querySelector('#auth-mascot');clearTimeout(spoolGreetingTimer);stage.classList.remove('is-greeting');
+ if(mode!=='login'&&mode!=='signup')return;
+ stage.dataset.greeting=mode;void stage.offsetWidth;stage.classList.add('is-greeting');
+ spoolGreetingTimer=setTimeout(()=>stage.classList.remove('is-greeting'),2700);
+}
 const authForm=document.querySelector('#auth-form');
 const authFields={name:document.querySelector('#auth-name'),email:document.querySelector('#auth-email'),password:document.querySelector('#auth-password'),confirm:document.querySelector('#auth-confirm')};
-let authMode='login', authBusy=false;
+let authMode=null, authBusy=false;
 const modeCopy={
- login:{title:'دوباره، از سرِ نخ.',subtitle:'یک قدم تا دنیای دوخته‌های دوست‌داشتنی.',button:'ورود به حساب'},
- signup:{title:'قصه‌ات را اینجا بدوز.',subtitle:'شروع یک همراهی تازه، با رنگ و پارچه.',button:'ساخت حساب'},
- forgot:{title:'سرِ نخ را پیدا کنیم.',subtitle:'ایمیل حسابت را برای بازیابی رمز وارد کن.',button:'درخواست بازیابی رمز'}
+ login:{title:'ورود',subtitle:'',button:'ورود به حساب'},
+ signup:{title:'ثبت‌نام',subtitle:'',button:'ساخت حساب'},
+ forgot:{title:'بازیابی رمز',subtitle:'ایمیل حسابت را برای بازیابی رمز وارد کن.',button:'درخواست بازیابی رمز'}
 };
 function authError(key,text){const input=authFields[key];document.querySelector('#'+key+'-error').textContent=text;input.setAttribute('aria-invalid',String(Boolean(text)));}
 function setAuthMessage(text,state='notice'){const status=document.querySelector('#auth-status');status.dataset.state=state;document.querySelector('#status-text').textContent=text;}
 function clearSecrets(){['password','confirm'].forEach(key=>{authFields[key].value='';authFields[key].type='password';});document.querySelectorAll('[data-reveal]').forEach(b=>{b.textContent='نمایش';b.setAttribute('aria-pressed','false');b.setAttribute('aria-label',b.dataset.reveal==='auth-password'?'نمایش رمز عبور':'نمایش تکرار رمز عبور');});}
 function setAuthMode(mode,push=true){
- if(authBusy||!Object.hasOwn(modeCopy,mode))return;
+ if(authBusy||!Object.hasOwn(modeCopy,mode)||authMode===mode)return;
  authMode=mode;clearSecrets();Object.keys(authFields).forEach(key=>authError(key,''));setAuthMessage('');
  const signup=mode==='signup',forgot=mode==='forgot',copy=modeCopy[mode];
  document.querySelector('#name-field').hidden=!signup;authFields.name.disabled=!signup;authFields.name.required=signup;
@@ -20,14 +27,15 @@ function setAuthMode(mode,push=true){
  document.querySelector('#password-hint').hidden=!signup;
  document.querySelector('#login-options').hidden=mode!=='login';
  document.querySelector('#remember').checked=false;
- document.querySelector('#auth-title').textContent=copy.title;document.querySelector('#auth-subtitle').textContent=copy.subtitle;
- document.querySelector('#submit-label').textContent=AuthClient.enabled?copy.button:({login:'بررسی فرم ورود (نمایشی)',signup:'بررسی فرم ثبت‌نام (نمایشی)',forgot:'بررسی ایمیل بازیابی (نمایشی)'}[mode]);
+ document.querySelector('#auth-title').textContent=copy.title;document.querySelector('#auth-subtitle').textContent=copy.subtitle;document.querySelector('#auth-subtitle').hidden=!copy.subtitle;
+ document.querySelector('#submit-label').textContent=AuthClient.enabled?copy.button:({login:'بررسی ورود',signup:'بررسی ثبت‌نام',forgot:'بررسی ایمیل'}[mode]);
  document.querySelectorAll('[data-mode]').forEach(tab=>{const selected=tab.dataset.mode===(signup?'signup':'login');tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;});
  document.querySelector('#auth-content').setAttribute('aria-labelledby',signup?'signup-tab':'login-tab');
  document.querySelector('.auth-shell').dataset.mode=mode;
  document.querySelector('#auth-content').classList.remove('form-enter');void document.querySelector('#auth-content').offsetWidth;document.querySelector('#auth-content').classList.add('form-enter');
  document.title=(signup?'ثبت‌نام':forgot?'بازیابی رمز':'ورود')+' | بقچه';
  if(push)history.pushState({},'',location.pathname+'?mode='+mode);
+ playSpoolGreeting(mode);
 }
 function validateAuthField(key){
  const input=authFields[key];if(input.disabled)return true;
@@ -77,7 +85,7 @@ authForm.addEventListener('submit',async event=>{
   if(!AuthClient.enabled){
    // Only simulate the processing indicator. Never persist or transmit the payload.
    await new Promise(resolve=>setTimeout(resolve,650));
-   setAuthMessage(mode==='forgot'?'ساختار ایمیل بررسی شد. سرویس بازیابی متصل نیست و ایمیلی ارسال نشد.':'اعتبارسنجی فرم انجام شد. این حالت نمایشی است؛ حسابی ساخته نشد و ورود واقعی انجام نشد.','demo');
+   setAuthMessage(mode==='forgot'?'ساختار ایمیل بررسی شد. سرویس بازیابی متصل نیست و ایمیلی ارسال نشد.':'فرم معتبر است. در حالت نمایشی، حساب یا ورود واقعی انجام نمی‌شود.','demo');
   }else{
    const data=await AuthClient.request(mode,payload);
    if(mode==='forgot')setAuthMessage('اگر این ایمیل حسابی داشته باشد، راهنمای بازیابی برای آن ارسال می‌شود.','notice');
