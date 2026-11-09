@@ -1,112 +1,219 @@
-/* Skeletal animation with world-space foot contacts and two-bone inverse kinematics.
-   SVG units; milliseconds. The silhouette never flips as a flat image. */
+/* BOGHCHE spool rig: one behaviour controller, independent walk/run foot planners,
+   world-space contact anchors, near-straight standing legs and blended expressions. */
 globalThis.MascotMotion=(()=>{
- const duration=5900,ground=151,clamp=n=>Math.max(0,Math.min(1,n));
- const ease=n=>{n=clamp(n);return n*n*n*(n*(n*6-15)+10);};
- const mix=(a,b,t)=>a+(b-a)*t,point=(x,y)=>({x,y});
- const lerpPoint=(a,b,t)=>point(mix(a.x,b.x,t),mix(a.y,b.y,t));
+ const ground=151,upper=23.5,lower=23.5;
+ const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v)),mix=(a,b,t)=>a+(b-a)*t;
+ const ease=p=>{p=clamp(p);return p*p*p*(p*(p*6-15)+10);};
+ const point=(x,y)=>({x,y}),blend=(a,b,t)=>point(mix(a.x,b.x,t),mix(a.y,b.y,t));
+ const approach=(a,b,amount)=>a+clamp(b-a,-amount,amount);
  function ik(a,b,l1,l2,bend=1){
-  const dx=b.x-a.x,dy=b.y-a.y,raw=Math.hypot(dx,dy),d=Math.max(.001,Math.min(raw,l1+l2-.001));
-  const ux=dx/(raw||1),uy=dy/(raw||1),along=(l1*l1-l2*l2+d*d)/(2*d);
-  const height=Math.sqrt(Math.max(0,l1*l1-along*along));
-  return point(a.x+ux*along-uy*height*bend,a.y+uy*along+ux*height*bend);
+  const dx=b.x-a.x,dy=b.y-a.y,raw=Math.hypot(dx,dy),d=clamp(raw,.001,l1+l2-.001),ux=dx/(raw||1),uy=dy/(raw||1);
+  const h=(l1*l1-l2*l2+d*d)/(2*d),s=Math.sqrt(Math.max(0,l1*l1-h*h));
+  return point(a.x+ux*h-uy*s*bend,a.y+uy*h+ux*s*bend);
  }
- function route(t){
-  if(t<280)return {fraction:0,phase:'ready',walking:false,p:t/280,direction:1};
-  if(t<1980)return {fraction:(t-280)/1700,phase:'outbound',walking:true,p:(t-280)/1700,direction:1};
-  if(t<3430)return {fraction:1,phase:'greeting',walking:false,p:(t-1980)/1450,direction:1};
-  if(t<3800)return {fraction:1,phase:'turning',walking:false,p:(t-3430)/370,direction:-1};
-  if(t<5500)return {fraction:1-(t-3800)/1700,phase:'returning',walking:true,p:(t-3800)/1700,direction:-1};
-  return {fraction:0,phase:'home',walking:false,p:clamp((t-5500)/400),direction:1};
+ const offsets=[-9,9];
+ class Gait{
+  constructor(x=0){this.feet=offsets.map(o=>({x:x+o,y:ground,contact:true}));this.step=null;this.next=0;this.phase=0;this.kind='walk';}
+  settled(x){return !this.step&&this.feet.every((f,i)=>Math.abs(f.x-x-offsets[i])<.6&&f.y===ground);}
+  advance(dt,x,v,goal,kind){
+   const seconds=dt/1000,moving=Math.abs(v)>2.5,dir=Math.sign(v)||Math.sign(goal-x)||1;
+   if(!this.step){
+    let which=this.next;
+    if(!moving){const errors=this.feet.map((f,i)=>Math.abs(f.x-x-offsets[i])+Math.abs(f.y-ground));which=errors[0]>=errors[1]?0:1;if(errors[which]<.6)return;}
+    const duration=moving?(kind==='run'?190:235):180;
+    let destination=x+offsets[which];
+    if(moving){const horizon=duration/1000,max=kind==='run'?152:106,accel=kind==='run'?590:430;const accelerating=Math.min(horizon,Math.max(0,(max-Math.abs(v))/accel));
+     const forecast=dir*(Math.abs(v)*horizon+.5*accel*accelerating**2+accel*accelerating*(horizon-accelerating)+6);destination=x+offsets[which]+clamp(forecast,-31,31);destination=dir>0?Math.min(destination,goal+offsets[which]+4):Math.max(destination,goal+offsets[which]-4);}
+    this.step={which,from:{...this.feet[which]},to:destination,elapsed:0,duration,kind:moving?kind:'gather',support:1-which};
+    this.next=1-which;
+   }
+   const s=this.step;s.elapsed=Math.min(s.duration,s.elapsed+dt);const u=s.elapsed/s.duration;
+   const swing=this.feet[s.which],support=this.feet[s.support];
+   this.kind=s.kind;this.phase=u;
+   if(s.kind==='run'){
+    // Run has its own ballistic flight window (.56-.78), a folded recovery leg,
+    // longer aerial reach and arm drive. It is not accelerated walking.
+    const p=ease(u/.78);swing.x=mix(s.from.x,s.to,p);swing.y=mix(s.from.y,ground,p)-23*Math.sin(Math.PI*clamp(u/.78))**2;swing.contact=u>=.78;
+    if(u>.56){support.y=ground-15*ease((u-.56)/.44);support.contact=false;}
+    else{support.y=ground;support.contact=true;}
+   }else{
+    const p=ease(u);swing.x=mix(s.from.x,s.to,p);swing.y=mix(s.from.y,ground,p)-(s.kind==='gather'?4:9)*Math.sin(Math.PI*p)**2;swing.contact=u===1;
+    support.y=ground;support.contact=true;
+   }
+   if(u===1){swing.x=s.to;swing.y=ground;swing.contact=true;this.step=null;}
+  }
  }
- // Alternate a swinging foot with an immutable planted ankle. A final gathering
- // step finishes both feet under the pelvis. Quintic lifts have zero contact speed.
- function walk(p,distance,direction){
-  let count=Math.max(4,Math.ceil(distance/36)+2);if(count%2)count++;
-  const ramp=.18;
-  const glide=q=>{q=clamp(q);if(q<ramp)return .5*(q-ramp/Math.PI*Math.sin(Math.PI*q/ramp))/(1-ramp);if(q>1-ramp)return 1-glide(1-q);return (q-ramp/2)/(1-ramp);};
-  const travel=q=>distance*glide(Math.min(1,q*count/(count-1)));
-  const u=clamp(p)*count,index=Math.min(count-1,Math.floor(u)),f=clamp(u-index);
-  const feet=[-12,12].map(offset=>({x:offset,y:ground,contact:true}));
-  const start=direction===1?0:distance,world=q=>start+direction*travel(q);
-  feet[0].x+=start;feet[1].x+=start;
-  for(let step=0;step<index;step++)feet[step%2].x=world((step+1)/count)+(step%2===0?-12:12);
-  const swing=index%2,from=feet[swing].x,to=world((index+1)/count)+(swing===0?-12:12);
-  const s=ease((f-.10)/.80),height=12*Math.sin(Math.PI*s)**2;
-  feet[swing]={x:mix(from,to,s),y:ground-height,contact:s===0||s===1};
-  const x=world(clamp(p)),weight=Math.sin(Math.PI*s),support=swing===0?1:-1;
-  return {x,feet,weight,support,step:index,swing,progress:s};
- }
- function arm(shoulder,hand,bend,wrist){return {shoulder,elbow:ik(shoulder,hand,20,21,bend),hand,wrist};}
+ const expressions={
+  calm:{eyeL:.93,eyeR:.93,browL:0,browR:0,angleL:0,angleR:0,smile:.45,open:.03,width:8,cheek:.55,head:0},
+  curious:{eyeL:1.07,eyeR:.91,browL:-2.2,browR:-.4,angleL:-.8,angleR:.5,smile:.25,open:.10,width:6,cheek:.55,head:-3},
+  happy:{eyeL:.82,eyeR:.82,browL:-1.8,browR:-1.8,angleL:0,angleR:0,smile:1,open:.35,width:10,cheek:.85,head:2},
+  surprised:{eyeL:1.22,eyeR:1.22,browL:-4,browR:-4,angleL:0,angleR:0,smile:.05,open:.95,width:4,cheek:.45,head:-2},
+  mischief:{eyeL:.77,eyeR:.94,browL:-2.3,browR:.8,angleL:-1.8,angleR:1,smile:.85,open:.15,width:9,cheek:.8,head:3}
+ };
  class Clock{
-  constructor(){this.elapsed=duration;this.mode='login';this.lastMode=null;this.pending=null;this.reaction=null;this.previousReaction=-1;this.running=false;this.distance=0;this.targetDistance=0;this.scale=1;}
-  request(mode){if(mode===this.lastMode)return;this.lastMode=mode;if(!['login','signup'].includes(mode)){this.pending=null;return;}if(this.running||this.reaction){this.pending=mode;return;}this.begin(mode);}
-  begin(mode){this.mode=mode;this.elapsed=0;this.running=true;this.pending=null;this.distance=this.targetDistance;}
-  setDistance(distance,scale=this.scale){this.scale=scale;this.targetDistance=Math.max(0,distance);if(!this.running&&!this.reaction)this.distance=this.targetDistance;}
-  react(random=Math.random()){
+  constructor({seed=713}={}){
+   this.time=0;this.state='idle';this.elapsed=0;this.x=0;this.v=0;this.goal=0;this.max=0;this.home=0;this.title=0;this.scale=1;this.initialized=false;
+   this.mode='login';this.lastMode=null;this.pending=null;this.gait=new Gait();this.facing=0;this.bodyFacing=0;this.runMix=0;
+   this.reaction=null;this.previousReaction=-1;this.held=false;this.pointerData=null;this.wasNear=false;this.farSince=0;this.lastConsumed=-1;
+   this.escapeDirection=1;this.bounces=0;this.candidate=0;this.candidateSince=0;this.lastTurn=-1000;this.cooldown=0;this.serial=0;
+   this.face={...expressions.calm};this.gaze=point(0,0);this.gazeTarget=point(0,0);this.emotion='calm';this.randomState=seed>>>0;this.blinkAt=2700+this.random()*1700;this.blinkStart=-1000;
+  }
+  random(){this.randomState=(1664525*this.randomState+1013904223)>>>0;return this.randomState/4294967296;}
+  setLayout(maxPixels,scale=1){
+   const oldMax=this.max,oldScale=this.scale;
+   this.scale=scale;this.max=Math.max(0,maxPixels/scale);this.title=this.max;this.home=Math.max(0,this.max-82/scale);
+   if(this.initialized&&(Math.abs(oldMax-this.max)>.01||Math.abs(oldScale-scale)>.001)){
+    // Responsive reflow carries the complete skeleton and its foot anchors
+    // together, preserving the current step while fitting the new lane.
+    const next=this.state==='idle'?this.home:clamp(oldMax?this.x/oldMax*this.max:0,0,this.max),shift=next-this.x;
+    this.x=next;this.goal=clamp(this.goal+shift,0,this.max);this.gait.feet.forEach(f=>f.x+=shift);
+    if(this.gait.step){this.gait.step.from.x+=shift;this.gait.step.to+=shift;}
+    this.pointerData=null;
+   }
+   if(!this.initialized){this.x=this.home;this.goal=this.x;this.gait=new Gait(this.x);this.initialized=true;}
+   if(this.state==='walk-title')this.goal=this.title;
+   else if(['walk-home','return-home'].includes(this.state))this.goal=this.home;
+   else this.goal=clamp(this.goal,0,this.max);
+  }
+  setDistance(distance,scale=1){this.setLayout(distance,scale);}
+  transition(state){this.state=state;this.elapsed=0;}
+  request(mode){
+   if(mode===this.lastMode)return;this.lastMode=mode;
+   if(!['login','signup'].includes(mode)){this.pending=null;if(this.state!=='idle'){this.goal=this.home;this.transition('return-home');}return;}
+   if(this.state!=='idle'||this.reaction||this.held){this.pending=mode;return;}
+   this.begin(mode);
+  }
+  begin(mode){this.mode=mode;this.pending=null;this.goal=this.x;this.transition('anticipate');}
+  pointer(x,y,dx=0,dy=0){this.pointerData={x,y,dx,dy,serial:++this.serial};}
+  leave(){this.pointerData=null;}
+  press(held){this.held=held;if(!held)this.cooldown=this.time+900;}
+  react(random=this.random()){
    if(this.reaction)return false;
    const choices=[0,1,2].filter(n=>n!==this.previousReaction),type=choices[Math.min(choices.length-1,Math.floor(clamp(random)*choices.length))];
-   this.previousReaction=type;this.reaction={type,elapsed:0,duration:1200};return true;
+   this.previousReaction=type;this.reaction={type,elapsed:0,duration:1120};this.cooldown=this.time+1800;return true;
   }
-  advance(dt){
-   dt=Math.max(0,Math.min(dt,40));
+  proximity(){
+   const p=this.pointerData;if(!p)return {near:false,curious:false,direction:this.escapeDirection,approaching:false};
+   const dx=p.x-(this.x+80),dy=p.y-76,radius=Math.hypot(dx/102,dy/86);
+   let direction=Math.abs(dx)>16?-Math.sign(dx):Math.abs(p.dx)>.5?-Math.sign(p.dx):this.escapeDirection;
+   return {near:radius<1.12,curious:radius<1.85,direction,approaching:Math.hypot(p.dx,p.dy)>1.1,serial:p.serial};
+  }
+  notice(info){
+   this.lastConsumed=info.serial;this.bounces=0;this.escapeDirection=info.direction;this.goal=this.x;this.candidate=0;this.transition('notice');
+  }
+  flee(dir){
+   this.escapeDirection=dir;this.lastTurn=this.time;
+   if(this.max<8){this.goal=this.x;this.cooldown=this.time+1600;this.transition('calm');return;}
+   const available=dir>0?this.max-this.x:this.x;
+   if(available<8){this.goal=this.x;this.transition('edge-turn');return;}
+   this.goal=clamp(this.x+dir*100,0,this.max);this.transition('run');
+  }
+  advance(rawDt){
+   const real=clamp(rawDt,0,6000),dt=Math.min(real,32),sec=dt/1000;this.time+=real;
+   const info=this.proximity();
+   if(!info.near){if(this.wasNear)this.farSince=this.time;}else this.farSince=this.time;
+   if(!this.reaction&&!this.held){
+    this.elapsed+=dt;
+    const canNotice=!['notice','run','edge-turn'].includes(this.state)&&this.time>this.cooldown;
+    if(canNotice&&info.near&&info.serial!==this.lastConsumed&&(!this.wasNear||info.approaching))this.notice(info);
+    if(this.state==='anticipate'&&this.elapsed>180){this.goal=this.title;this.transition('walk-title');}
+    if(this.state==='notice'&&this.elapsed>360){if(info.near)this.flee(info.direction);else{this.goal=this.home;this.transition('return-home');}}
+    if(this.state==='run'){
+     if(info.near&&info.serial!==this.lastConsumed&&info.direction!==this.escapeDirection&&this.time-this.lastTurn>480){
+      if(this.candidate!==info.direction){this.candidate=info.direction;this.candidateSince=this.time;}
+      if(this.time-this.candidateSince>170){this.lastConsumed=info.serial;this.flee(this.candidate);this.candidate=0;}
+     }else this.candidate=0;
+     if(!info.near&&this.time-this.farSince>450){this.goal=this.home;this.transition('return-home');}
+    }
+    if(this.state==='edge-turn'&&this.elapsed>290){this.bounces++;this.flee(-this.escapeDirection);this.cooldown=this.time+1100;}
+    if(this.state==='greet'&&this.elapsed>1180){this.goal=this.x;this.transition('turn-home');}
+    if(this.state==='turn-home'&&this.elapsed>240){this.goal=this.home;this.transition('walk-home');}
+    if(this.state==='settle'&&this.elapsed>160){this.transition('idle');this.cooldown=Math.max(this.cooldown,this.time+700);}
+    if(this.state==='calm'&&!info.near&&this.time-this.farSince>550){this.goal=this.home;this.transition('return-home');}
+    const moving=['walk-title','walk-home','return-home','run'].includes(this.state);
+    const delta=this.goal-this.x,run=this.state==='run',maxSpeed=run?152:106,accel=run?590:430,brake=run?660:540;
+    let desired=moving?Math.sign(delta)*Math.min(maxSpeed,Math.sqrt(2*brake*Math.abs(delta))):0;
+    // Brake before reversing: the planted foot and current swing finish naturally.
+    if(this.v*desired<0&&Math.abs(this.v)>7)desired=0;
+    this.v=approach(this.v,desired,(Math.abs(desired)<Math.abs(this.v)?brake:accel)*sec);
+    const next=this.x+this.v*sec;
+    if(moving&&Math.sign(delta)!==Math.sign(this.goal-next)){this.x=this.goal;this.v=0;}else this.x=next;
+    this.gait.advance(dt,this.x,this.v,this.goal,run?'run':'walk');
+    const arrived=Math.abs(this.x-this.goal)<.4&&Math.abs(this.v)<1&&this.gait.settled(this.x);
+    if(arrived){
+     if(this.state==='walk-title')this.transition('greet');
+     else if(['walk-home','return-home'].includes(this.state))this.transition('settle');
+     else if(this.state==='run'){
+      if((this.x<2||this.x>this.max-2)&&this.bounces<1){this.goal=this.x;this.transition('edge-turn');}
+      else{this.cooldown=this.time+1000;this.goal=this.x;this.transition('calm');}
+     }
+    }
+    if(this.state==='idle'&&this.pending)this.begin(this.pending);
+   }
    if(this.reaction){this.reaction.elapsed+=dt;if(this.reaction.elapsed>=this.reaction.duration)this.reaction=null;}
-   else if(this.running){this.elapsed=Math.min(duration,this.elapsed+dt);if(this.elapsed===duration){this.running=false;this.distance=this.targetDistance;}}
-   if(!this.running&&!this.reaction&&this.pending)this.begin(this.pending);
+   this.wasNear=info.near;
+   const runTarget=this.gait.kind==='run'&&!!this.gait.step?1:0;this.runMix=mix(this.runMix,runTarget,1-Math.exp(-dt/140));
+   let direction=Math.abs(this.v)>5?Math.sign(this.v):this.state==='notice'?info.direction:this.state==='edge-turn'?-this.escapeDirection:this.state==='anticipate'||this.state==='walk-title'?1:['turn-home','walk-home','return-home'].includes(this.state)?Math.sign(this.home-this.x)||-1:0;
+   if(this.state==='greet'||this.state==='idle'||this.state==='calm')direction=0;
+   this.facing=mix(this.facing,direction,1-Math.exp(-dt/105));this.bodyFacing=mix(this.bodyFacing,this.facing,1-Math.exp(-dt/160));
+   let emotion=this.state==='notice'?(this.elapsed<190?'surprised':'mischief'):['run','edge-turn','calm'].includes(this.state)?'mischief':this.state==='greet'?'happy':info.curious?'curious':'calm';
+   if(this.reaction)emotion=this.reaction.elapsed<160?'surprised':this.reaction.type===1?'mischief':'happy';
+   this.emotion=emotion;const target=expressions[emotion],factor=1-Math.exp(-dt/110);
+   for(const key in target)this.face[key]=mix(this.face[key],target[key],factor);
+   const p=this.pointerData,gaze=p&&info.curious?point(clamp((p.x-this.x-80)/35,-2.8,2.8),clamp((p.y-75)/45,-1.7,1.7)):point(this.facing*1.2,0);
+   this.gazeTarget=gaze;this.gaze=blend(this.gaze,gaze,1-Math.exp(-dt/80));
+   if(this.time>=this.blinkAt){this.blinkStart=this.time;this.blinkAt=this.time+2400+this.random()*3000;}
    return this.pose();
   }
   pose(){
-   const r=route(this.elapsed),D=this.distance/this.scale;
-   const gait=r.walking?walk(r.p,D,r.direction):null;
-   const root=gait?gait.x:(r.phase==='greeting'||r.phase==='turning'?D:0);
-   let feet=gait?gait.feet:[{x:root-12,y:ground,contact:true},{x:root+12,y:ground,contact:true}];
-   let crouch=0,lift=0,lean=0,head=0,smile=.2,cheeks=.62;
-   let facing=r.phase==='ready'?ease(r.p):r.walking?r.direction:r.phase==='greeting'?1-ease(r.p*5):r.phase==='turning'?-ease(r.p):-(1-ease(r.p));
-   const torsoFacing=r.phase==='ready'?ease((r.p-.2)/.8):r.walking?r.direction:r.phase==='greeting'?1-ease((r.p-.08)*4):r.phase==='turning'?-ease((r.p-.18)/.82):-(1-ease((r.p-.12)/.88));
-   const torsoWidth=1-.12*Math.abs(torsoFacing),headWidth=1-.08*Math.abs(facing);
-   let sway=gait?gait.support*gait.weight*1.6:0;
-   if(gait){lift=-1.8*gait.weight;crouch=.6*gait.weight;lean=r.direction*2.2*Math.sin(Math.PI*r.p);head=-lean*.45;}
-   if(r.phase==='ready'){crouch=3*Math.sin(Math.PI*r.p);lean=2.2*Math.sin(Math.PI*r.p);}
-   if(r.phase==='home'){crouch=1.6*Math.sin(Math.PI*r.p);head=-1.5*Math.sin(Math.PI*r.p);}
-   const greet=r.phase==='greeting'?Math.sin(Math.PI*r.p)**2:0;
-   let wave=greet,elbowWave=0,wristWave=0;
-   if(this.mode==='signup'){elbowWave=Math.sin(r.p*Math.PI*8)*greet*5;wristWave=Math.sin(r.p*Math.PI*10-.6)*greet*19;head+=Math.sin(r.p*Math.PI*2)*greet*3;}
-   else{wave=greet*.75;head+=Math.sin(Math.PI*clamp((r.p-.1)/.65))*greet*9;wristWave=Math.sin(r.p*Math.PI*4)*greet*9;}
-   smile+=.6*greet;
-   let reactionAmount=0,jump=0;
-   if(this.reaction){
-    const p=this.reaction.elapsed/1200;
-    // Land the raised foot, prepare, act, recover, then restore the EXACT
-    // suspended gait pose before releasing route time. Clicks cannot queue.
-    reactionAmount=ease(p/.15)*(1-ease((p-.83)/.17));
-    const floorFeet=feet.map(f=>({...f,y:ground,contact:true}));
-    feet=feet.map((f,i)=>({...lerpPoint(f,floorFeet[i],reactionAmount),contact:f.contact||reactionAmount===1}));
-    sway*=1-reactionAmount;lean*=1-reactionAmount;head*=1-reactionAmount;wave*=1-reactionAmount;
-    if(this.reaction.type===0){
-     const anticipation=3.8*Math.sin(Math.PI*clamp((p-.12)/.20))**2;
-     jump=22*Math.sin(Math.PI*clamp((p-.32)/.30))**2;
-     const landing=5*Math.sin(Math.PI*clamp((p-.62)/.22))**2;
-     crouch=mix(crouch,anticipation+landing,reactionAmount);lift=mix(lift,-jump,reactionAmount);
-     feet=feet.map((f,i)=>({...f,y:f.y-jump*.88-(i?1:0)*Math.sin(Math.PI*clamp((p-.32)/.30))**2,contact:jump<.001&&f.contact}));
-     wave+=reactionAmount*.75;head-=4*reactionAmount;smile+=reactionAmount;
-    }else if(this.reaction.type===1){
-     lean+=Math.sin(p*Math.PI*3)*reactionAmount*8;head-=Math.sin(p*Math.PI*3-.35)*reactionAmount*6;
-     crouch+=2*reactionAmount;wave+=reactionAmount*.5;wristWave+=Math.sin(p*Math.PI*6)*reactionAmount*15;smile+=reactionAmount*.8;
-    }else{head+=9*reactionAmount;crouch+=2*reactionAmount;wave+=.78*reactionAmount;wristWave+=Math.sin(p*Math.PI*8)*reactionAmount*15;cheeks+=.35*reactionAmount;smile+=reactionAmount*.6;}
+   let feet=this.gait.feet.map(f=>({...f})),wave=0,head=this.face.head,tilt=this.facing*(Math.abs(this.v)/106)*(3+this.runMix*5),crouch=0,jump=0;
+   const swing=this.gait.step,cycle=this.gait.phase;
+   const flight=this.runMix>0.1&&feet.every(f=>!f.contact)?Math.sin(Math.PI*clamp((cycle-.56)/.22)):0;
+   if(this.state==='greet'){
+    const p=clamp(this.elapsed/1180),e=Math.sin(Math.PI*p)**2;wave=e;
+    head+=this.mode==='login'?Math.sin(p*Math.PI*2)*e*7:Math.sin(p*Math.PI*2)*e*3;
    }
-   const hipY=112+lift+crouch,pelvis=point(80+sway,hipY),torso=point(pelvis.x,hipY-39);
-   const leftShoulder=point(torso.x-30*torsoWidth,torso.y-9+Math.sin(lean*.1)),rightShoulder=point(torso.x+30*torsoWidth,torso.y-9-2*wave);
-   const stride=gait?(feet[0].x-feet[1].x+24)*.23*(1-reactionAmount):0;
-   const leftHand=point(leftShoulder.x-7-stride,leftShoulder.y+34-Math.abs(stride)*.14);
-   const rightRest=point(rightShoulder.x+7+stride,rightShoulder.y+34-Math.abs(stride)*.14);
-   const rightHello=point(rightShoulder.x+17+elbowWave,rightShoulder.y-27);
-   const rightHand=lerpPoint(rightRest,rightHello,Math.min(1,wave*1.45));
+   if(this.state==='anticipate'){const e=Math.sin(Math.PI*clamp(this.elapsed/180));tilt+=1.5*e;crouch=e*.8;}
+   let wrist=0;
+   if(this.reaction){
+    const p=this.reaction.elapsed/1120,e=ease(p/.16)*(1-ease((p-.82)/.18));
+    feet=feet.map(f=>({...f,y:mix(f.y,ground,e),contact:f.contact||e===1}));tilt*=1-e;
+    if(this.reaction.type===0){
+     crouch+=3.4*Math.sin(Math.PI*clamp((p-.10)/.20))**2;
+     jump=19*Math.sin(Math.PI*clamp((p-.31)/.31))**2;
+     crouch+=4.2*Math.sin(Math.PI*clamp((p-.62)/.22))**2;
+     feet=feet.map(f=>({...f,y:f.y-jump*1.1,contact:jump<.001&&f.contact}));wave+=e*.6;head-=3*e;
+    }else if(this.reaction.type===1){tilt+=Math.sin(p*Math.PI*3)*e*5;head-=Math.sin(p*Math.PI*3-.3)*e*5;wave+=.5*e;wrist=Math.sin(p*Math.PI*7)*e*18;}
+    else{head+=7*e;wave+=.8*e;wrist=Math.sin(p*Math.PI*8)*e*16;}
+   }
+   const side=this.bodyFacing,hipWidth=9*(1-.18*Math.abs(side)),sway=swing?(swing.which===0?1:-1)*Math.sin(cycle*Math.PI)*.8:0;
+   let height=46.6-this.runMix*3.6;
+   // Supporting legs are almost straight at mid-stance. Only lower the pelvis
+   // enough for actual reach, rather than forcing permanent deep knee flexion.
+   feet.forEach((f,i)=>{const dx=f.x-this.x-(i===0?-hipWidth:hipWidth)-sway;const available=Math.sqrt(Math.max(1,46.7**2-dx*dx))+(ground-f.y);height=Math.min(height,available);});
+   let hipY=ground-height+crouch-jump-flight*4.2;
+   feet.forEach((f,i)=>{const dx=f.x-this.x-(i===0?-hipWidth:hipWidth)-sway;hipY=Math.max(hipY,f.y-Math.sqrt(Math.max(1,46.7**2-dx*dx)));});
+   const pelvis=point(80+sway,hipY);
+   const torso=point(pelvis.x,hipY-34);
    const legs=feet.map((f,i)=>{
-    const hip=point(pelvis.x+(i===0?-13:13)*torsoWidth,hipY),ankle=point(f.x-root+80,f.y);
-    return {hip,knee:lerpPoint(lerpPoint(ik(hip,ankle,28,30,1),ik(hip,ankle,28,30,-1),.5),ik(hip,ankle,28,30,facing<0?1:-1),Math.abs(facing)),ankle,contact:f.contact,worldX:f.x,worldY:f.y,toe:f.contact?0:(f.y-ground)*r.direction*.7};
+    const hip=point(pelvis.x+(i===0?-hipWidth:hipWidth),hipY),ankle=point(f.x-this.x+80,f.y);
+    const front=blend(ik(hip,ankle,upper,lower,1),ik(hip,ankle,upper,lower,-1),.5),profile=ik(hip,ankle,upper,lower,this.facing<0?1:-1);
+    return {hip,knee:blend(front,profile,Math.abs(this.facing)),ankle,contact:f.contact,worldX:f.x,worldY:f.y,toe:f.contact?0:clamp((ground-f.y)*this.facing*.6,-12,12)};
    });
-   return {x:root*this.scale,root,phase:r.phase,walking:r.walking,reaction:this.reaction?['jump','twist','shy'][this.reaction.type]:'none',active:this.running||Boolean(this.reaction),legs,pelvis,torso,torsoWidth,headWidth,bodyTilt:lean,headTilt:head,headX:facing*5-sway*.3,facing,leftArm:arm(leftShoulder,leftHand,1,-8+stride),rightArm:arm(rightShoulder,rightHand,-1,-12+wristWave),smile,cheeks,lift,crouch,jump};
+   const stride=(feet[0].x-feet[1].x+18)*.27;
+   const shoulderY=hipY-45,leftShoulder=point(pelvis.x-27,shoulderY+.3*tilt),rightShoulder=point(pelvis.x+27,shoulderY-.3*tilt-wave*2);
+   const drive=1+this.runMix*.45;
+   const leftHand=point(leftShoulder.x-6-stride*drive,leftShoulder.y+29-this.runMix*8-Math.abs(stride)*.12);
+   const rightRest=point(rightShoulder.x+6+stride*drive,rightShoulder.y+29-this.runMix*8-Math.abs(stride)*.12);
+   const greet=Math.min(1,wave*1.5),rightHand=blend(rightRest,point(rightShoulder.x+16+Math.sin(this.elapsed/105)*wave*3,rightShoulder.y-25),greet);
+   const arm=(s,h,b,w)=>({shoulder:s,elbow:ik(s,h,18,20,b),hand:h,wrist:w});
+   const blinkTime=this.time-this.blinkStart,blink=blinkTime>=0&&blinkTime<170?1-Math.sin(Math.PI*clamp(blinkTime/170))**2:1;
+   const face={...this.face,eyeL:this.face.eyeL*blink,eyeR:this.face.eyeR*blink,gaze:{...this.gaze}};
+   const faceSettling=Object.keys(expressions[this.emotion]).some(k=>Math.abs(this.face[k]-expressions[this.emotion][k])>.005);
+   const gazeSettling=Math.hypot(this.gaze.x-this.gazeTarget.x,this.gaze.y-this.gazeTarget.y)>.03;
+   const active=(this.state!=='idle'&&(this.state!=='calm'||!this.proximity().near))||!!this.reaction||this.held||!!this.gait.step||faceSettling||gazeSettling||Math.abs(this.facing)>.005||Math.abs(this.bodyFacing)>.005||this.runMix>.005||(blinkTime>=0&&blinkTime<190);
+   return {x:this.x*this.scale,root:this.x,v:this.v,phase:this.reaction?'react':this.state,resumePhase:this.state,reaction:this.reaction?['jump','twist','shy'][this.reaction.type]:'none',emotion:this.emotion,active,sleepFor:clamp(this.blinkAt-this.time,60,5500),legs,pelvis,torso,torsoWidth:1-.10*Math.abs(side),headWidth:1-.06*Math.abs(this.facing),bodyTilt:tilt,headTilt:head,headX:this.facing*3,face,facing:this.facing,runMix:this.runMix,flight,walking:Math.abs(this.v)>2,cycleKind:this.gait.kind,leftArm:arm(leftShoulder,leftHand,1,-8+stride),rightArm:arm(rightShoulder,rightHand,-1,-12+wrist+Math.sin(this.elapsed/(this.mode==='signup'?82:145))*wave*18),jump,crouch,feet,held:this.held};
   }
  }
- return {Clock,route,walk,ik,duration};
+ return {Clock,Gait,ik,expressions,ground,upper,lower};
 })();

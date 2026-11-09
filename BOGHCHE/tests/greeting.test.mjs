@@ -3,105 +3,112 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 const source=await readFile(new URL('../dist/auth.js',import.meta.url),'utf8');
-const motionSource=await readFile(new URL('../dist/mascot-motion.js',import.meta.url),'utf8');
-const context=vm.createContext({});vm.runInContext(motionSource,context);
-const {Clock,duration,walk}=context.MascotMotion;
-function advance(clock,ms){while(ms>0){const step=Math.min(ms,8);clock.advance(step);ms-=step;}return clock.pose();}
-const near=(a,b,tolerance=1e-6)=>assert.ok(Math.abs(a-b)<tolerance,a+' versus '+b);
-const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-function clock(){const c=new Clock();c.setDistance(82,.65);c.request('signup');return c;}
-test('the tour gathers both feet and returns home after 5.9 seconds',()=>{
- const c=clock();const p=advance(c,950);assert.equal(p.walking,true);assert.ok(p.x>0&&p.x<82);
- const title=advance(c,1200);assert.equal(title.phase,'greeting');near(title.x,82);assert.ok(title.legs.every(l=>l.contact));
- const home=advance(c,duration-2150);assert.equal(home.phase,'home');near(home.x,0);assert.equal(home.active,false);assert.ok(home.legs.every(l=>l.contact));
+const context=vm.createContext({});vm.runInContext(await readFile(new URL('../dist/mascot-motion.js',import.meta.url),'utf8'),context);
+const {Clock,Gait,ground}=context.MascotMotion;
+const near=(a,b,t=1e-5)=>assert.ok(Math.abs(a-b)<t,a+' versus '+b);
+const length=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+function advance(c,ms,step=8){while(ms>0){const d=Math.min(ms,step);c.advance(d);ms-=d;}return c.pose();}
+function setup(){const c=new Clock({seed:173});c.setLayout(226,.65);return c;}
+function joints(p){return [p.pelvis,...p.legs.flatMap(l=>[l.hip,l.knee,l.ankle]),...['leftArm','rightArm'].flatMap(k=>[p[k].shoulder,p[k].elbow,p[k].hand])];}
+test('resting legs are nearly extended, with the corrected body/leg ratio',()=>{
+ const c=setup(),p=c.pose();for(const l of p.legs){assert.ok(length(l.hip,l.ankle)>46.4);assert.ok(Math.abs(l.knee.x-l.hip.x)<.2);assert.equal(l.contact,true);}
 });
-test('planted feet stay at the same world position throughout each contact',()=>{
- for(const direction of [1,-1])for(const length of [12,55,126,160]){
-  let previous=walk(0,length,direction);
-  for(let i=1;i<=1700;i++){
-   const next=walk(i/1700,length,direction);
-   next.feet.forEach((foot,j)=>{if(foot.contact&&previous.feet[j].contact){near(foot.x,previous.feet[j].x);near(foot.y,151);}});
-   assert.ok(next.feet.some(f=>f.contact),'there is always a supporting foot');
-   previous=next;
-  }
+test('uninterrupted tour walks to the title, greets and returns in 4-6 seconds',()=>{
+ const c=setup();c.request('signup');const states=new Set();let end;
+ for(let time=0;time<6200;time+=8){c.advance(8);states.add(c.state);if(c.state==='idle'){end=time;break;}}
+ for(const state of ['anticipate','walk-title','greet','turn-home','walk-home','settle','idle'])assert.ok(states.has(state),state);
+ assert.ok(end>=4000&&end<=6000);near(c.x,c.home);assert.ok(c.gait.settled(c.x));
+});
+test('walk and run planted feet retain their world anchors',()=>{
+ for(const kind of ['walk','run']){
+  const gait=new Gait(0);let x=0,previous=gait.feet.map(f=>({...f}));const speed=kind==='run'?152:106;
+  for(let t=0;t<1500;t+=4){x+=speed*.004;gait.advance(4,x,speed,1000,kind);gait.feet.forEach((f,i)=>{if(f.contact&&previous[i].contact){near(f.x,previous[i].x);near(f.y,ground);}});previous=gait.feet.map(f=>({...f}));}
  }
 });
-test('knees bend, arms counter-swing, and bone lengths stay bounded',()=>{
- const c=clock();let minKneeBend=Infinity,maxKneeBend=0,handRange=[Infinity,-Infinity];
- for(let i=0;i<1700;i++){
-  const p=advance(c,1);if(!p.walking)continue;
-  for(const leg of p.legs){assert.ok(distance(leg.hip,leg.knee)<=28.001);assert.ok(distance(leg.knee,leg.ankle)<=30.001);maxKneeBend=Math.max(maxKneeBend,Math.abs(leg.knee.x-leg.hip.x));minKneeBend=Math.min(minKneeBend,Math.abs(leg.knee.x-leg.hip.x));}
-  for(const arm of [p.leftArm,p.rightArm]){near(distance(arm.shoulder,arm.elbow),20,.001);near(distance(arm.elbow,arm.hand),21,.001);}
-  const forward=p.legs[0].worldX-p.legs[1].worldX+24;
-  assert.ok(forward*(p.leftArm.hand.x-p.leftArm.shoulder.x+7)<=.0001,'left arm opposes left leg');
-  const h=p.leftArm.hand.x-p.leftArm.shoulder.x;handRange=[Math.min(handRange[0],h),Math.max(handRange[1],h)];
+test('run has a flight phase and higher recovery; walking keeps a supporting foot',()=>{
+ const sample=kind=>{const g=new Gait(0);let x=0,flight=0,minY=ground;for(let t=0;t<1800;t+=4){x+=(kind==='run'?152:106)*.004;g.advance(4,x,kind==='run'?152:106,1000,kind);if(g.feet.every(f=>!f.contact))flight++;minY=Math.min(minY,...g.feet.map(f=>f.y));}return {flight,minY};};
+ const walk=sample('walk'),run=sample('run');assert.equal(walk.flight,0);assert.ok(run.flight>30);assert.ok(run.minY<walk.minY-10);
+});
+test('walk reach stays within leg length; pelvis travel stays controlled',()=>{
+ const c=setup();c.request('signup');let maxHip=0,minHip=200;
+ for(let t=0;t<5600;t+=4){const p=c.advance(4);p.legs.forEach(l=>assert.ok(length(l.hip,l.ankle)<=47.001));if(p.walking){maxHip=Math.max(maxHip,p.pelvis.y);minHip=Math.min(minHip,p.pelvis.y);}}
+ assert.ok(maxHip-minHip<7);
+});
+test('joint transitions remain continuous through the complete greeting tour',()=>{
+ const c=setup();c.request('signup');let previous=c.pose(),peak=0;
+ for(let t=0;t<5600;t++){const p=c.advance(1),a=joints(previous),b=joints(p);peak=Math.max(peak,...a.map((v,i)=>length(v,b[i])));previous=p;}
+ assert.ok(peak<1.2,'joint delta per millisecond: '+peak);
+});
+test('signup wave and login nod use different head/wrist motion',()=>{
+ const a=setup(),b=setup();a.request('signup');b.request('login');let difference=0;
+ for(let t=0;t<3500;t+=8){const p=a.advance(8),q=b.advance(8);if(p.phase==='greet')difference=Math.max(difference,Math.abs(p.headTilt-q.headTilt)+Math.abs(p.rightArm.wrist-q.rightArm.wrist));}
+ assert.ok(difference>10);
+});
+test('surprise and gaze precede escape, with a click-friendly notice interval',()=>{
+ const c=setup(),x=c.x;c.pointer(x+80+70,75,-5,0);
+ const early=advance(c,120);assert.equal(c.state,'notice');near(c.x,x);assert.equal(early.emotion,'surprised');assert.ok(early.face.eyeL>1);assert.ok(early.face.gaze.x>0);
+ advance(c,400);assert.equal(c.state,'run');assert.ok(c.v<0);assert.ok(c.x<x);
+});
+test('escape direction uses actual side and recent movement over the body',()=>{
+ for(const [offset,dx,wanted]of [[70,-4,-1],[-70,4,1],[0,-6,1],[0,6,-1]]){
+  const c=setup();c.pointer(c.x+80+offset,76,dx,0);advance(c,460);assert.equal(c.escapeDirection,wanted);assert.ok(c.v*wanted>0);
  }
- assert.ok(maxKneeBend-minKneeBend>10);assert.ok(handRange[1]-handRange[0]>10);
 });
-test('all joint transitions stay continuous at walk, greeting, turn and home boundaries',()=>{
- const c=clock();let previous=c.pose(),maxDelta=0;
- for(let i=1;i<=duration;i++){
-  const p=advance(c,1);
-  const joints=q=>[q.pelvis,q.torso,...q.legs.flatMap(l=>[l.hip,l.knee,l.ankle]),...['leftArm','rightArm'].flatMap(n=>[q[n].shoulder,q[n].elbow,q[n].hand])];
-  const a=joints(previous),b=joints(p);maxDelta=Math.max(maxDelta,...a.map((v,j)=>distance(v,b[j])));
-  previous=p;
- }
- assert.ok(maxDelta<1.1,'largest joint jump per millisecond: '+maxDelta);
+test('short alternating mouse movements cannot flip the running direction',()=>{
+ const c=setup();c.pointer(c.x+150,76,-5,0);advance(c,720);const original=c.escapeDirection;
+ for(let t=0;t<160;t+=8){c.pointer(c.x+80,76,t%16?4:-4,0);c.advance(8);}
+ assert.equal(c.escapeDirection,original);
 });
-test('signup waves through elbow and wrist while login adds a distinct head nod',()=>{
- const signup=clock(),login=new Clock();login.setDistance(82,.65);login.request('login');
- let elbowRange=[Infinity,-Infinity],wristRange=[Infinity,-Infinity],headDifference=0;
- for(let i=0;i<3430;i+=8){
-  const a=advance(signup,8),b=advance(login,8);if(a.phase!=='greeting')continue;
-  elbowRange=[Math.min(elbowRange[0],a.rightArm.elbow.x),Math.max(elbowRange[1],a.rightArm.elbow.x)];
-  wristRange=[Math.min(wristRange[0],a.rightArm.wrist),Math.max(wristRange[1],a.rightArm.wrist)];
-  headDifference=Math.max(headDifference,Math.abs(a.headTilt-b.headTilt));
- }
- assert.ok(elbowRange[1]-elbowRange[0]>5);assert.ok(wristRange[1]-wristRange[0]>20);assert.ok(headDifference>3);
+test('escape respects boundaries and smoothly turns inward at an edge',()=>{
+ const c=setup();c.setLayout(65,.65);c.pointer(c.x+150,76,-5,0);let sawTurn=false,sawRight=false,previous=c.x;
+ for(let t=0;t<6000;t+=8){c.advance(8);sawTurn||=c.state==='edge-turn';sawRight||=c.state==='run'&&c.v>10;assert.ok(c.x>=-.01&&c.x<=c.max+.01);assert.ok(Math.abs(c.x-previous)<1.4);previous=c.x;}
+ assert.ok(sawTurn);assert.ok(sawRight);
 });
-test('jump anticipates on the ground, lifts both feet, then compresses on landing',()=>{
- const c=new Clock();c.react(0);
- const prepare=advance(c,260);assert.ok(prepare.crouch>2);near(prepare.jump,0);assert.ok(prepare.legs.every(l=>l.contact));
- const flight=advance(c,300);assert.ok(flight.jump>15);assert.ok(flight.legs.every(l=>!l.contact));assert.ok(flight.smile>.5);
- const land=advance(c,320);near(land.jump,0);assert.ok(land.crouch>3);assert.ok(land.legs.every(l=>l.contact));
- const recover=advance(c,320);assert.equal(recover.active,false);near(recover.crouch,0);
+test('leaving the pointer returns by walking, with no positional reset',()=>{
+ const c=setup();c.pointer(c.x+150,76,-6,0);advance(c,800);c.leave();let previous=c.x,sawReturn=false;
+ for(let t=0;t<6000;t+=8){const p=c.advance(8);sawReturn||=p.phase==='return-home';assert.ok(Math.abs(c.x-previous)<1.4);previous=c.x;}
+ assert.ok(sawReturn);assert.equal(c.state,'idle');near(c.x,c.home);
 });
-test('interrupting mid-step freezes root and restores every joint before resuming',()=>{
- const c=clock();advance(c,990);const before=c.pose(),elapsed=c.elapsed;c.react(0);
- for(let i=0;i<1199;i++){const p=advance(c,1);near(p.x,before.x);assert.equal(c.elapsed,elapsed);}
- const end=advance(c,1);assert.equal(c.reaction,null);near(end.x,before.x);
- for(let i=0;i<2;i++){near(distance(end.legs[i].knee,before.legs[i].knee),0);near(distance(end.legs[i].ankle,before.legs[i].ankle),0);}
- advance(c,16);assert.ok(c.elapsed>elapsed);
+test('a stationary pointer cannot repeatedly trigger escapes on the walk home',()=>{
+ const c=setup();c.pointer(c.x+150,76,-5,0);advance(c,7000);assert.equal(c.state,'idle');near(c.x,c.home);
 });
-test('each reaction blends at both ends without abrupt limb or face changes',()=>{
+test('mouse-down and click take priority over escape; route resumes at the same position',()=>{
+ const c=setup();c.request('signup');advance(c,700);const x=c.x,step=c.gait.step?.elapsed;
+ c.press(true);c.pointer(c.x+80,70,4,0);advance(c,350);near(c.x,x);assert.equal(c.gait.step?.elapsed,step);
+ c.press(false);assert.equal(c.react(0),true);advance(c,1112);near(c.x,x);assert.equal(c.gait.step?.elapsed,step);
+ advance(c,8);assert.equal(c.reaction,null);advance(c,32);assert.ok(c.x>x);
+});
+test('reaction transitions do not jump and rapid clicks never queue',()=>{
  for(const random of [0,.4,.99]){
-  const c=clock();advance(c,850);c.react(random);let prev=c.pose(),maxDelta=0;
-  for(let i=0;i<1200;i++){const p=advance(c,1);maxDelta=Math.max(maxDelta,...p.legs.map((l,j)=>distance(l.knee,prev.legs[j].knee)),distance(p.rightArm.hand,prev.rightArm.hand));prev=p;}
-  assert.ok(maxDelta<1,'reaction joint jump: '+maxDelta);
+  const c=setup();c.request('signup');advance(c,850);c.react(random);let previous=c.pose(),peak=0;
+  for(let t=0;t<1120;t++){const p=c.advance(1);const a=joints(previous),b=joints(p);peak=Math.max(peak,...a.map((v,i)=>length(v,b[i])));previous=p;}
+  assert.ok(peak<1.5,'reaction joint delta: '+peak);
+ }
+ const c=setup();c.react(0);const first=c.reaction.type;for(let i=0;i<30;i++)assert.equal(c.react(.8),false);advance(c,1120);assert.equal(c.reaction,null);c.react(0);assert.notEqual(c.reaction.type,first);
+});
+test('expressions blend continuously and blinking intervals vary',()=>{
+ const c=setup(),intervals=[];let blinkAt=c.blinkAt;
+ c.pointer(c.x+250,76,-3,0);const calm=c.pose().face;advance(c,80);assert.ok(c.pose().face.eyeL<1.23);
+ for(let t=0;t<16000;t+=8){c.advance(8);if(c.blinkAt!==blinkAt){intervals.push(c.blinkAt-blinkAt);blinkAt=c.blinkAt;}}
+ assert.ok(intervals.length>=3);assert.ok(new Set(intervals.map(n=>Math.round(n))).size>1);
+ assert.ok(Object.keys(context.MascotMotion.expressions).every(k=>['calm','curious','happy','surprised','mischief'].includes(k)));
+ assert.ok(calm.eyeL>0);
+});
+test('form switching queues one welcome and repeated active-form requests do not replay',()=>{
+ const c=setup();c.request('signup');advance(c,600);const x=c.x;c.request('login');near(c.x,x);
+ advance(c,11000);assert.equal(c.mode,'login');assert.equal(c.state,'idle');c.request('login');assert.equal(c.state,'idle');
+});
+test('small mobile and desktop routes remain inside their reserved heading lane',()=>{
+ for(const [range,scale] of [[45,.5125],[97,.55],[226,.65]]){
+  const c=new Clock();c.setLayout(range,scale);c.request('signup');for(let t=0;t<6000;t+=8){c.advance(8);assert.ok(c.x>=0&&c.x<=c.max+.01);}near(c.x,c.home);
  }
 });
-test('rapid clicks are dropped, no reaction queues, no immediate repeat',()=>{
- const c=new Clock();c.react(0);const first=c.reaction.type;
- for(let i=0;i<30;i++)assert.equal(c.react(0),false);
- advance(c,1200);assert.equal(c.reaction,null);assert.equal(c.pose().active,false);
- c.react(0);assert.notEqual(c.reaction.type,first);
-});
-test('mode requests wait for home and the active form never replays its tour',()=>{
- const c=clock();advance(c,700);const x=c.pose().x;c.request('login');near(c.pose().x,x);assert.equal(c.mode,'signup');
- advance(c,duration-700);assert.equal(c.mode,'login');near(c.pose().x,0);advance(c,duration);c.request('login');assert.equal(c.running,false);
-});
-test('resizing does not change a planted route mid-step; new distance applies at home',()=>{
- const c=clock();advance(c,800);const before=c.pose();c.setDistance(40);near(c.pose().x,before.x);advance(c,16);assert.ok(c.pose().x>=before.x);
- advance(c,duration);assert.equal(c.distance,40);
-});
-test('a stalled browser frame is capped, preventing a timeline jump',()=>{
- const c=clock();c.advance(5000);assert.equal(c.elapsed,40);
+test('a stalled frame cannot jump the physical route',()=>{
+ const c=setup();c.request('signup');advance(c,700);const x=c.x;c.advance(5000);assert.ok(Math.abs(c.x-x)<3.5);
 });
 test('the active form guard prevents field clearing and greeting replay',()=>{
- let resets=0,greetings=0;
- const ctx=vm.createContext({authMode:'login',authBusy:false,modeCopy:{login:{},signup:{}},clearSecrets(){resets++;},playSpoolGreeting(){greetings++;}});
- vm.runInContext(source.slice(source.indexOf('function setAuthMode'),source.indexOf('function validateAuthField')),ctx);vm.runInContext("setAuthMode('login')",ctx);
- assert.equal(resets,0);assert.equal(greetings,0);
+ let resets=0,greetings=0;const ctx=vm.createContext({authMode:'login',authBusy:false,modeCopy:{login:{},signup:{}},clearSecrets(){resets++;},playSpoolGreeting(){greetings++;}});
+ vm.runInContext(source.slice(source.indexOf('function setAuthMode'),source.indexOf('function validateAuthField')),ctx);vm.runInContext("setAuthMode('login')",ctx);assert.equal(resets,0);assert.equal(greetings,0);
 });
 
 test('machine enamel stays distinct on all four light surfaces and a dark reference',async()=>{
@@ -115,3 +122,7 @@ test('machine enamel stays distinct on all four light surfaces and a dark refere
  colors.forEach((c,i)=>{assert.ok(contrast(c[1],surfaces[i])>3);assert.ok(contrast(c[1],'#171b24')>3);assert.ok(contrast(c[1],c[2])>4.5);});
  const clay=colors[1][1];assert.ok(parseInt(clay.slice(5,7),16)>parseInt(clay.slice(1,3),16)*2,'red/clay theme uses a blue machine');
 });
+
+test('a narrow lane permits one edge bounce, then rests until the pointer moves again',()=>{const c=new Clock();c.setLayout(45,.5125);c.pointer(c.x+100,76,-4,0);advance(c,8000);assert.equal(c.state,'calm');near(c.v,0);assert.ok(c.bounces<=1);const x=c.x;advance(c,3000);near(c.x,x);});
+
+test('run flight and jumping cannot stretch either leg past its anatomical length',()=>{const c=setup();c.pointer(c.x+150,76,-5,0);for(let t=0;t<7000;t+=4){const p=c.advance(4);p.legs.forEach(l=>assert.ok(length(l.hip,l.ankle)<=47.001));}c.leave();c.react(0);for(let t=0;t<1120;t+=4)c.advance(4).legs.forEach(l=>assert.ok(length(l.hip,l.ankle)<=47.001));});
