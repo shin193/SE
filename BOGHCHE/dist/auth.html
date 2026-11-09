@@ -10,18 +10,34 @@
 <main class="auth-shell">
  <section class="auth-panel" aria-labelledby="auth-title">
   <svg class="frame-stitch" viewBox="0 0 500 740" preserveAspectRatio="none" aria-hidden="true"><defs><mask id="frame-reveal-mask"><rect class="frame-reveal" x="8" y="8" width="484" height="724" rx="25" pathLength="100"/></mask></defs><rect class="frame-dashes" x="8" y="8" width="484" height="724" rx="25" pathLength="100" mask="url(#frame-reveal-mask)"/></svg>
-  <div class="form-heading"><h1 id="auth-title">ورود</h1><p id="auth-subtitle" hidden></p><div class="mascot-lane"><button id="auth-mascot" class="mascot-button" type="button" aria-label="قرقرهٔ بازیگوش؛ برای واکنش کلیک کن یا Enter و Space را بزن"><span class="mascot-ground" aria-hidden="true"></span><span class="mascot-hover"><span class="mascot-pose"><svg class="spool-character" aria-hidden="true" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
-
-<g class="spool-legs" fill="none" stroke="var(--spool-ink)" stroke-width="5" stroke-linecap="round"><path class="spool-leg-left" d="M57 106L53 123H43"/><path class="spool-leg-right" d="M84 106L89 123H99"/></g>
-<g class="spool-left-arm"><path d="M42 66Q25 68 24 86" fill="none" stroke="var(--spool-ink)" stroke-width="4" stroke-linecap="round"/><circle cx="24" cy="87" r="5" fill="var(--spool-cap)" stroke="var(--spool-body)" stroke-width="2"/></g>
-<g class="spool-wave"><path d="M101 64Q116 63 117 44" fill="none" stroke="var(--spool-ink)" stroke-width="4" stroke-linecap="round"/><path d="M112 45Q108 33 112 32L116 38Q115 24 119 25L120 37Q124 27 126 30L123 40Q131 34 131 38L126 47Q119 53 114 47Z" fill="var(--spool-cap)" stroke="var(--spool-body)" stroke-width="1.6" stroke-linejoin="round"/></g>
-<g class="spool-head"><path d="M45 30Q69 20 96 30L99 104Q69 114 42 104Z" fill="var(--spool-body)"/><path d="M44 35Q70 42 97 35M44 43Q70 50 97 43M44 51Q70 58 98 51M43 88Q70 95 98 88M43 97Q70 104 99 97" fill="none" stroke="var(--spool-ivory)" stroke-opacity=".32" stroke-width="2.3"/>
-<path d="M39 29Q70 17 101 29L100 35Q70 45 39 35Z" fill="var(--spool-cap)" stroke="var(--spool-body)" stroke-width="1.5"/><ellipse cx="70" cy="28" rx="31" ry="9" fill="var(--spool-cap)" stroke="var(--spool-body)" stroke-width="1.5"/><ellipse cx="70" cy="28" rx="9" ry="3.5" fill="var(--spool-coral)" opacity=".65"/>
-<path d="M38 102Q70 111 103 102L103 110Q70 121 38 110Z" fill="var(--spool-cap)" stroke="var(--spool-body)" stroke-width="1.5"/>
-<path d="M55 63Q60 59 64 62M78 62Q83 59 87 63" fill="none" stroke="var(--spool-ink)" stroke-width="2" stroke-linecap="round"/>
-<g class="spool-eyes"><ellipse cx="61" cy="70" rx="3.6" ry="5" fill="var(--spool-ivory)"/><ellipse cx="83" cy="70" rx="3.6" ry="5" fill="var(--spool-ivory)"/><circle class="spool-pupil" cx="62" cy="71" r="2" fill="var(--spool-ink)"/><circle class="spool-pupil" cx="84" cy="71" r="2" fill="var(--spool-ink)"/></g>
-<ellipse class="spool-cheek" cx="52" cy="79" rx="5" ry="2.5" fill="var(--spool-coral)" opacity=".7"/><ellipse class="spool-cheek" cx="92" cy="79" rx="5" ry="2.5" fill="var(--spool-coral)" opacity=".7"/><path class="spool-smile" d="M65 81Q72 88 80 81" fill="none" stroke="var(--spool-ivory)" stroke-width="2" stroke-linecap="round"/>
-<path d="M96 98Q118 105 110 114" fill="none" stroke="var(--spool-coral)" stroke-width="1.8" stroke-linecap="round"/></g></svg></span></span></button></div></div>
+  <div class="form-heading"><h1 id="auth-title">ورود</h1><p id="auth-subtitle" hidden></p><div class="mascot-lane"><button id="auth-mascot" class="mascot-button" type="button" aria-label="قرقرهٔ بازیگوش؛ برای واکنش کلیک کن یا Enter و Space را بزن"><span class="mascot-ground" aria-hidden="true"></span><span class="mascot-hover"><span class="mascot-pose"><svg class="spool-character" aria-hidden="true" viewBox="0 0 160 168" xmlns="http://www.w3.org/2000/svg">
+<g class="rig-legs" fill="none" stroke="var(--spool-ink)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+ <g data-leg="0"><path class="leg-bone" d="M67 112L62 132L68 151"/><circle class="knee-stitch" cx="62" cy="132" r="2"/><g class="shoe"><path d="M-5 -1Q0 -5 6 -1L12 2Q14 5 8 5H-5Z" fill="var(--spool-cap)" stroke-width="2"/></g></g>
+ <g data-leg="1"><path class="leg-bone" d="M93 112L98 132L92 151"/><circle class="knee-stitch" cx="98" cy="132" r="2"/><g class="shoe"><path d="M-5 -1Q0 -5 6 -1L12 2Q14 5 8 5H-5Z" fill="var(--spool-cap)" stroke-width="2"/></g></g>
+</g>
+<g class="rig-arm rig-left" fill="none" stroke="var(--spool-ink)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+ <path class="arm-bone"/><g class="hand"><path d="M-4 -2Q-7 -9 -4 -9L-1 -5Q-2 -13 1 -13L3 -5Q6 -11 8 -8L6 -2Q13 -6 12 -2L7 5Q1 10 -4 4Z" fill="var(--spool-cap)" stroke-width="1.8"/><path d="M0 0Q3 -2 5 0" stroke-width="1"/></g>
+</g>
+<g class="rig-torso">
+ <path d="M50 40Q80 33 110 40L112 109Q80 119 48 109Z" fill="var(--spool-body)" stroke="var(--spool-ink)" stroke-width="1.6"/>
+ <path d="M50 48Q80 55 110 48M49 56Q80 63 111 56M49 94Q80 102 111 94M49 102Q80 110 111 102" fill="none" stroke="var(--spool-ivory)" stroke-opacity=".30" stroke-width="2.3"/>
+ <path d="M48 65Q50 88 48 102" fill="none" stroke="var(--spool-ivory)" stroke-opacity=".17" stroke-width="3"/>
+ <path d="M43 108Q80 120 117 108L117 116Q80 129 43 116Z" fill="var(--spool-cap)" stroke="var(--spool-ink)" stroke-width="1.6"/>
+ <path d="M107 109Q128 112 121 124" fill="none" stroke="var(--spool-coral)" stroke-width="2" stroke-linecap="round"/>
+</g>
+<g class="rig-head">
+ <g class="spool-cap"><path d="M44 36Q80 23 116 36V42Q80 55 44 42Z" fill="var(--spool-cap)" stroke="var(--spool-ink)" stroke-width="1.6"/><ellipse cx="80" cy="35" rx="36" ry="10" fill="var(--spool-cap)" stroke="var(--spool-ink)" stroke-width="1.6"/><ellipse cx="80" cy="35" rx="9" ry="3.5" fill="var(--spool-coral)"/><path d="M53 32Q70 25 89 29" fill="none" stroke="var(--spool-ivory)" stroke-width="2" stroke-linecap="round" opacity=".7"/></g>
+ <g class="rig-face">
+  <path class="spool-brows" d="M61 65Q65 62 69 64M87 64Q91 62 95 65" fill="none" stroke="var(--spool-ink)" stroke-width="1.8" stroke-linecap="round"/>
+  <g class="spool-eyes"><ellipse cx="66" cy="73" rx="4" ry="5.5" fill="var(--spool-ivory)"/><ellipse cx="91" cy="73" rx="4" ry="5.5" fill="var(--spool-ivory)"/><circle class="spool-pupil" cx="67" cy="74" r="2.2" fill="var(--spool-ink)"/><circle class="spool-pupil" cx="92" cy="74" r="2.2" fill="var(--spool-ink)"/><circle cx="67.7" cy="72.8" r=".7" fill="white"/><circle cx="92.7" cy="72.8" r=".7" fill="white"/></g>
+  <ellipse class="spool-cheek" cx="56" cy="82" rx="5.5" ry="3" fill="var(--spool-coral)"/><ellipse class="spool-cheek" cx="101" cy="82" rx="5.5" ry="3" fill="var(--spool-coral)"/>
+  <path class="spool-smile" d="M71 85Q79 93 87 85" fill="none" stroke="var(--spool-ivory)" stroke-width="2" stroke-linecap="round"/>
+ </g>
+</g>
+<g class="rig-arm rig-right" fill="none" stroke="var(--spool-ink)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+ <path class="arm-bone"/><g class="hand"><path d="M-4 -2Q-7 -9 -4 -9L-1 -5Q-2 -13 1 -13L3 -5Q6 -11 8 -8L6 -2Q13 -6 12 -2L7 5Q1 10 -4 4Z" fill="var(--spool-cap)" stroke-width="1.8"/><path d="M0 0Q3 -2 5 0" stroke-width="1"/></g>
+</g>
+</svg></span></span></button></div></div>
   <div class="auth-tabs" role="tablist" aria-label="انتخاب فرم"><span class="tab-seam" aria-hidden="true"></span><button id="login-tab" role="tab" aria-selected="true" aria-controls="auth-content" data-mode="login">ورود</button><button id="signup-tab" role="tab" aria-selected="false" aria-controls="auth-content" tabindex="-1" data-mode="signup">ثبت‌نام</button></div>
   <p class="auth-demo" id="auth-disclosure"><span aria-hidden="true">◌</span> حالت نمایشی؛ حساب یا ورود واقعی انجام نمی‌شود.</p>
   <div id="auth-content" role="tabpanel" aria-labelledby="login-tab">
@@ -42,17 +58,17 @@
    <defs><pattern id="linen" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 1H6M1 0V6" stroke="currentColor" stroke-opacity=".08" stroke-width=".5"/></pattern><pattern id="gingham" width="32" height="32" patternUnits="userSpaceOnUse"><rect width="32" height="32" fill="var(--paper)"/><path d="M0 8H32M8 0V32" stroke="var(--olive)" stroke-opacity=".22" stroke-width="16"/></pattern></defs>
    <ellipse cx="307" cy="414" rx="208" ry="16" fill="var(--olive)" opacity=".08"/>
    <path class="loose-thread" d="M40 320C60 230 129 420 167 355S224 393 244 357" fill="none" stroke="var(--rust)" stroke-width="2"/>
-   <g class="machine-body"><path d="M160 174Q160 150 184 150H408Q437 150 437 178V353H359V228H221V281H160Z" fill="var(--olive)"/><path d="M160 174Q160 150 184 150H408Q437 150 437 178V353H359V228H221V281H160Z" fill="url(#linen)"/>
-   <path d="M179 172H341" stroke="var(--paper)" stroke-opacity=".5" stroke-width="2" stroke-dasharray="3 5"/>
-   <rect x="141" y="350" width="314" height="28" rx="9" fill="var(--dark)"/><path d="M158 378H181V386H158ZM409 378H434V386H409Z" fill="var(--olive)"/>
-   <g class="machine-wheel"><circle cx="435" cy="191" r="44" fill="var(--dark)"/><circle cx="435" cy="191" r="32" fill="none" stroke="var(--soft)" stroke-width="3"/><circle cx="435" cy="191" r="9" fill="var(--soft)"/><path d="M435 160V180M435 202V222M404 191H424M446 191H466" stroke="var(--soft)" stroke-width="2"/></g>
-   <circle cx="392" cy="270" r="13" fill="var(--soft)"/><path d="M392 263V277" stroke="var(--olive)" stroke-width="3"/>
-   <rect x="165" y="279" width="50" height="9" rx="3" fill="var(--dark)"/>
-   <g class="sewing-needle"><path d="M191 286V342" stroke="var(--ink)" stroke-width="3"/><path d="M191 326V342" stroke="var(--rust)" stroke-width="1"/></g><path d="M180 343H210" stroke="var(--ink)" stroke-width="3"/>
-   <path d="M274 350H334L358 410H270L239 376Z" fill="url(#gingham)"/><path class="fabric-stitch" d="M273 357L288 403" stroke="var(--olive)" stroke-width="2" stroke-dasharray="3 5"/>
+   <g class="machine-body"><path d="M160 174Q160 150 184 150H408Q437 150 437 178V353H359V228H221V281H160Z" fill="var(--machine-enamel)"/><path d="M160 174Q160 150 184 150H408Q437 150 437 178V353H359V228H221V281H160Z" fill="url(#linen)"/>
+   <path d="M179 172H341" stroke="var(--machine-detail)" stroke-opacity=".5" stroke-width="2" stroke-dasharray="3 5"/>
+   <rect x="141" y="350" width="314" height="28" rx="9" fill="var(--machine-edge)"/><path d="M158 378H181V386H158ZM409 378H434V386H409Z" fill="var(--machine-enamel)"/>
+   <g class="machine-wheel"><circle cx="435" cy="191" r="44" fill="var(--machine-edge)"/><circle cx="435" cy="191" r="32" fill="none" stroke="var(--machine-detail)" stroke-width="3"/><circle cx="435" cy="191" r="9" fill="var(--machine-detail)"/><path d="M435 160V180M435 202V222M404 191H424M446 191H466" stroke="var(--machine-detail)" stroke-width="2"/></g>
+   <circle cx="392" cy="270" r="13" fill="var(--machine-detail)"/><path d="M392 263V277" stroke="var(--machine-enamel)" stroke-width="3"/>
+   <rect x="165" y="279" width="50" height="9" rx="3" fill="var(--machine-edge)"/>
+   <g class="sewing-needle"><path d="M191 286V342" stroke="var(--machine-metal)" stroke-width="3"/><path d="M191 326V342" stroke="var(--rust)" stroke-width="1"/></g><path d="M180 343H210" stroke="var(--machine-metal)" stroke-width="3"/>
+   <path d="M274 350H334L358 410H270L239 376Z" fill="url(#gingham)"/><path class="fabric-stitch" d="M273 357L288 403" stroke="var(--machine-enamel)" stroke-width="2" stroke-dasharray="3 5"/>
    <path class="top-thread" d="M377 125C325 75 190 112 191 160V281" stroke="var(--rust)" stroke-width="1.5" fill="none"/>
-   <g class="top-spool"><path d="M377 113V150" stroke="var(--ink)" stroke-width="3"/><rect x="359" y="99" width="36" height="35" rx="5" fill="var(--rust)"/><path d="M355 99H399M355 134H399" stroke="var(--cream)" stroke-width="7"/><path d="M361 107H393M361 115H393M361 123H393" stroke="var(--paper)" stroke-opacity=".45" stroke-width="2"/></g>
-   <text x="276" y="197" text-anchor="middle" fill="var(--paper)" opacity=".9" font-family="Vazirmatn" font-size="15">بقچه</text></g>
+   <g class="top-spool"><path d="M377 113V150" stroke="var(--machine-metal)" stroke-width="3"/><rect x="359" y="99" width="36" height="35" rx="5" fill="var(--rust)"/><path d="M355 99H399M355 134H399" stroke="var(--cream)" stroke-width="7"/><path d="M361 107H393M361 115H393M361 123H393" stroke="var(--machine-detail)" stroke-opacity=".45" stroke-width="2"/></g>
+   <text x="276" y="197" text-anchor="middle" fill="var(--machine-detail)" opacity=".9" font-family="Vazirmatn" font-size="15">بقچه</text></g>
    <g class="floor-spool"><rect x="88" y="340" width="40" height="53" rx="6" fill="var(--rust)"/><path d="M83 341H133M83 395H133" stroke="var(--cream)" stroke-width="9" stroke-linecap="round"/><path d="M90 351H126M90 360H126M90 369H126M90 378H126M90 386H126" stroke="var(--paper)" stroke-opacity=".4" stroke-width="2"/></g>
    <g transform="translate(466 325) rotate(15)"><rect width="63" height="72" rx="3" fill="var(--cream)"/><path d="M7 7H56V65H7Z" fill="none" stroke="var(--rust)" stroke-dasharray="3 4"/></g>
    <g class="hand-needle" transform="translate(473 125) rotate(25)"><path d="M0 0V70L-3 76L-5 70V0Z" fill="var(--muted)"/><ellipse cx="-2.5" cy="8" rx="1" ry="4" fill="var(--paper)"/><path d="M-2 8C-60 -44 75 -52 53 12" fill="none" stroke="var(--rust)" stroke-width="1.2"/></g>
