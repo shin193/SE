@@ -44,11 +44,11 @@ globalThis.MascotMotion=(()=>{
   }
  }
  const expressions={
-  calm:{eyeL:.93,eyeR:.93,browL:0,browR:0,angleL:0,angleR:0,smile:.45,open:.03,width:8,cheek:.55,head:0},
-  curious:{eyeL:1.07,eyeR:.91,browL:-2.2,browR:-.4,angleL:-.8,angleR:.5,smile:.25,open:.10,width:6,cheek:.55,head:-3},
-  happy:{eyeL:.82,eyeR:.82,browL:-1.8,browR:-1.8,angleL:0,angleR:0,smile:1,open:.35,width:10,cheek:.85,head:2},
-  surprised:{eyeL:1.22,eyeR:1.22,browL:-4,browR:-4,angleL:0,angleR:0,smile:.05,open:.95,width:4,cheek:.45,head:-2},
-  mischief:{eyeL:.77,eyeR:.94,browL:-2.3,browR:.8,angleL:-1.8,angleR:1,smile:.85,open:.15,width:9,cheek:.8,head:3}
+  calm:{eyeL:.93,eyeR:.93,browL:0,browR:0,angleL:0,angleR:0,smile:0,open:.025,width:7,head:0},
+  curious:{eyeL:1.07,eyeR:.91,browL:-2.2,browR:-.4,angleL:-.8,angleR:.5,smile:-.08,open:.19,width:4.8,head:-3},
+  happy:{eyeL:.82,eyeR:.82,browL:-1.8,browR:-1.8,angleL:0,angleR:0,smile:.72,open:.13,width:9,head:2},
+  surprised:{eyeL:1.22,eyeR:1.22,browL:-4,browR:-4,angleL:0,angleR:0,smile:-.32,open:.47,width:4.3,head:-2},
+  mischief:{eyeL:.77,eyeR:.94,browL:-2.3,browR:.8,angleL:-1.8,angleR:1,smile:.16,open:.06,width:7.2,head:3}
  };
  class Clock{
   constructor({seed=713}={}){
@@ -156,7 +156,7 @@ globalThis.MascotMotion=(()=>{
    let direction=Math.abs(this.v)>5?Math.sign(this.v):this.state==='notice'?info.direction:this.state==='edge-turn'?-this.escapeDirection:this.state==='anticipate'||this.state==='walk-title'?1:['turn-home','walk-home','return-home'].includes(this.state)?Math.sign(this.home-this.x)||-1:0;
    if(this.state==='greet'||this.state==='idle'||this.state==='calm')direction=0;
    this.facing=mix(this.facing,direction,1-Math.exp(-dt/105));this.bodyFacing=mix(this.bodyFacing,this.facing,1-Math.exp(-dt/160));
-   let emotion=this.state==='notice'?(this.elapsed<190?'surprised':'mischief'):['run','edge-turn','calm'].includes(this.state)?'mischief':this.state==='greet'?'happy':info.curious?'curious':'calm';
+   let emotion=this.state==='notice'?'surprised':['run','edge-turn','calm'].includes(this.state)?'mischief':this.state==='greet'&&this.elapsed>160&&this.elapsed<820?'happy':info.curious?'curious':'calm';
    if(this.reaction)emotion=this.reaction.elapsed<160?'surprised':this.reaction.type===1?'mischief':'happy';
    this.emotion=emotion;const target=expressions[emotion],factor=1-Math.exp(-dt/110);
    for(const key in target)this.face[key]=mix(this.face[key],target[key],factor);
@@ -170,8 +170,10 @@ globalThis.MascotMotion=(()=>{
    const swing=this.gait.step,cycle=this.gait.phase;
    const flight=this.runMix>0.1&&feet.every(f=>!f.contact)?Math.sin(Math.PI*clamp((cycle-.56)/.22)):0;
    if(this.state==='greet'){
-    const p=clamp(this.elapsed/1180),e=Math.sin(Math.PI*p)**2;wave=e;
-    head+=this.mode==='login'?Math.sin(p*Math.PI*2)*e*7:Math.sin(p*Math.PI*2)*e*3;
+    const p=clamp(this.elapsed/1180);
+    const nod=Math.sin(Math.PI*clamp((p-.16)/.58))**2;
+    wave=this.mode==='signup'?.68*Math.sin(Math.PI*clamp((p-.20)/.52))**2:0;
+    head+=nod*(this.mode==='login'?8:4);
    }
    if(this.state==='anticipate'){const e=Math.sin(Math.PI*clamp(this.elapsed/180));tilt+=1.5*e;crouch=e*.8;}
    let wrist=0;
@@ -182,9 +184,9 @@ globalThis.MascotMotion=(()=>{
      crouch+=3.4*Math.sin(Math.PI*clamp((p-.10)/.20))**2;
      jump=19*Math.sin(Math.PI*clamp((p-.31)/.31))**2;
      crouch+=4.2*Math.sin(Math.PI*clamp((p-.62)/.22))**2;
-     feet=feet.map(f=>({...f,y:f.y-jump*1.1,contact:jump<.001&&f.contact}));wave+=e*.6;head-=3*e;
-    }else if(this.reaction.type===1){tilt+=Math.sin(p*Math.PI*3)*e*5;head-=Math.sin(p*Math.PI*3-.3)*e*5;wave+=.5*e;wrist=Math.sin(p*Math.PI*7)*e*18;}
-    else{head+=7*e;wave+=.8*e;wrist=Math.sin(p*Math.PI*8)*e*16;}
+     feet=feet.map(f=>({...f,y:f.y-jump*1.1,contact:jump<.001&&f.contact}));head-=3*e;
+    }else if(this.reaction.type===1){tilt+=Math.sin(p*Math.PI*3)*e*5;head-=Math.sin(p*Math.PI*3-.3)*e*5;wave+=.24*e;wrist=5*e;}
+    else{head+=7*e;wave+=.36*e;wrist=8*e;}
    }
    const side=this.bodyFacing,hipWidth=9*(1-.18*Math.abs(side)),sway=swing?(swing.which===0?1:-1)*Math.sin(cycle*Math.PI)*.8:0;
    let height=46.6-this.runMix*3.6;
@@ -205,14 +207,14 @@ globalThis.MascotMotion=(()=>{
    const drive=1+this.runMix*.45;
    const leftHand=point(leftShoulder.x-6-stride*drive,leftShoulder.y+29-this.runMix*8-Math.abs(stride)*.12);
    const rightRest=point(rightShoulder.x+6+stride*drive,rightShoulder.y+29-this.runMix*8-Math.abs(stride)*.12);
-   const greet=Math.min(1,wave*1.5),rightHand=blend(rightRest,point(rightShoulder.x+16+Math.sin(this.elapsed/105)*wave*3,rightShoulder.y-25),greet);
+   const greet=Math.min(1,wave*1.5),rightHand=blend(rightRest,point(rightShoulder.x+18,rightShoulder.y-22),greet);
    const arm=(s,h,b,w)=>({shoulder:s,elbow:ik(s,h,18,20,b),hand:h,wrist:w});
    const blinkTime=this.time-this.blinkStart,blink=blinkTime>=0&&blinkTime<170?1-Math.sin(Math.PI*clamp(blinkTime/170))**2:1;
    const face={...this.face,eyeL:this.face.eyeL*blink,eyeR:this.face.eyeR*blink,gaze:{...this.gaze}};
    const faceSettling=Object.keys(expressions[this.emotion]).some(k=>Math.abs(this.face[k]-expressions[this.emotion][k])>.005);
    const gazeSettling=Math.hypot(this.gaze.x-this.gazeTarget.x,this.gaze.y-this.gazeTarget.y)>.03;
    const active=(this.state!=='idle'&&(this.state!=='calm'||!this.proximity().near))||!!this.reaction||this.held||!!this.gait.step||faceSettling||gazeSettling||Math.abs(this.facing)>.005||Math.abs(this.bodyFacing)>.005||this.runMix>.005||(blinkTime>=0&&blinkTime<190);
-   return {x:this.x*this.scale,root:this.x,v:this.v,phase:this.reaction?'react':this.state,resumePhase:this.state,reaction:this.reaction?['jump','twist','shy'][this.reaction.type]:'none',emotion:this.emotion,active,sleepFor:clamp(this.blinkAt-this.time,60,5500),legs,pelvis,torso,torsoWidth:1-.10*Math.abs(side),headWidth:1-.06*Math.abs(this.facing),bodyTilt:tilt,headTilt:head,headX:this.facing*3,face,facing:this.facing,runMix:this.runMix,flight,walking:Math.abs(this.v)>2,cycleKind:this.gait.kind,leftArm:arm(leftShoulder,leftHand,1,-8+stride),rightArm:arm(rightShoulder,rightHand,-1,-12+wrist+Math.sin(this.elapsed/(this.mode==='signup'?82:145))*wave*18),jump,crouch,feet,held:this.held};
+   return {x:this.x*this.scale,root:this.x,v:this.v,phase:this.reaction?'react':this.state,resumePhase:this.state,reaction:this.reaction?['jump','twist','shy'][this.reaction.type]:'none',emotion:this.emotion,active,sleepFor:clamp(this.blinkAt-this.time,60,5500),legs,pelvis,torso,torsoWidth:1-.10*Math.abs(side),headWidth:1-.06*Math.abs(this.facing),bodyTilt:tilt,headTilt:head,headX:this.facing*3,face,facing:this.facing,runMix:this.runMix,flight,walking:Math.abs(this.v)>2,cycleKind:this.gait.kind,leftArm:arm(leftShoulder,leftHand,1,-8+stride),rightArm:arm(rightShoulder,rightHand,-1,-12+wrist+wave*12),jump,crouch,feet,held:this.held};
   }
  }
  return {Clock,Gait,ik,expressions,ground,upper,lower};

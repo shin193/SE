@@ -22,7 +22,7 @@ function setAuthMode(mode,push=true){
  document.querySelector('#login-options').hidden=mode!=='login';
  document.querySelector('#remember').checked=false;
  document.querySelector('#auth-title').textContent=copy.title;document.querySelector('#auth-subtitle').textContent=copy.subtitle;document.querySelector('#auth-subtitle').hidden=!copy.subtitle;
- document.querySelector('#submit-label').textContent=AuthClient.enabled?copy.button:({login:'بررسی ورود',signup:'بررسی ثبت‌نام',forgot:'بررسی ایمیل'}[mode]);
+ document.querySelector('#submit-label').textContent=copy.button;
  document.querySelectorAll('[data-mode]').forEach(tab=>{const selected=tab.dataset.mode===(signup?'signup':'login');tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;});
  document.querySelector('#auth-content').setAttribute('aria-labelledby',signup?'signup-tab':'login-tab');
  document.querySelector('.auth-shell').dataset.mode=mode;
@@ -35,7 +35,7 @@ function validateAuthField(key){
  const input=authFields[key];if(input.disabled)return true;
  const value=input.value;
  let error='';
- if(key==='name'&&(value.trim().length<2||value.trim().length>60))error='نام را بین ۲ تا ۶۰ نویسه وارد کن.';
+ if(key==='name'&&([...value.trim()].length<2||[...value.trim()].length>60))error='نام را بین ۲ تا ۶۰ نویسه وارد کن.';
  if(key==='email'&&(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())||value.length>254))error='یک ایمیل معتبر وارد کن؛ مثل name@example.com.';
  if(key==='password'){
   if(!value)error='رمز عبور را وارد کن.';
@@ -54,7 +54,7 @@ Object.entries(authFields).forEach(([key,input])=>{
 });
 document.querySelectorAll('[data-mode]').forEach(tab=>{
  tab.addEventListener('click',()=>setAuthMode(tab.dataset.mode));
- tab.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();if(authBusy)return;const next=event.key==='Home'?'login':event.key==='End'?'signup':tab.dataset.mode==='login'?'signup':'login';setAuthMode(next);document.querySelector('[data-mode="'+next+'"]').focus();}});
+ tab.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();if(authBusy||!AuthClient.enabled)return;const next=event.key==='Home'?'login':event.key==='End'?'signup':tab.dataset.mode==='login'?'signup':'login';setAuthMode(next);document.querySelector('[data-mode="'+next+'"]').focus();}});
 });
 document.querySelector('#forgot-link').addEventListener('click',event=>{event.preventDefault();setAuthMode('forgot');authFields.email.focus();});
 document.querySelectorAll('[data-reveal]').forEach(button=>button.addEventListener('click',()=>{const field=document.getElementById(button.dataset.reveal);const show=field.type==='password';field.type=show?'text':'password';button.textContent=show?'پنهان':'نمایش';button.setAttribute('aria-pressed',String(show));button.setAttribute('aria-label',(show?'پنهان‌کردن ':'نمایش ')+(field===authFields.password?'رمز عبور':'تکرار رمز عبور'));}));
@@ -74,25 +74,41 @@ authForm.addEventListener('submit',async event=>{
  const mode=authMode;
  const payload={email:authFields.email.value.trim()};
  if(mode!=='forgot'){payload.password=authFields.password.value;if(mode==='signup')payload.name=authFields.name.value.trim();else payload.remember=document.querySelector('#remember').checked;}
- setAuthBusy(true);setAuthMessage(AuthClient.enabled?'در حال ارسال درخواست امن…':'در حال بررسی نمایشی فرم…','processing');
+ setAuthBusy(true);setAuthMessage('در حال ارسال درخواست…','processing');
  try{
-  if(!AuthClient.enabled){
-   // Only simulate the processing indicator. Never persist or transmit the payload.
-   await new Promise(resolve=>setTimeout(resolve,650));
-   setAuthMessage(mode==='forgot'?'ساختار ایمیل بررسی شد. سرویس بازیابی متصل نیست و ایمیلی ارسال نشد.':'فرم معتبر است. در حالت نمایشی، حساب یا ورود واقعی انجام نمی‌شود.','demo');
+  await AuthClient.request(mode,payload);
+  if(mode==='forgot'){
+   setAuthMessage('درخواست بازیابی دریافت شد.','notice');
   }else{
-   const data=await AuthClient.request(mode,payload);
-   if(mode==='forgot')setAuthMessage('اگر این ایمیل حسابی داشته باشد، راهنمای بازیابی برای آن ارسال می‌شود.','notice');
-   else{await AuthClient.request('session');await announceSessionChange();setAuthMessage(mode==='signup'?'حساب ایجاد شد و وارد شدی. وضعیت حساب در تب فروشگاه به‌روز می‌شود.':'ورود انجام شد. وضعیت حساب در تب فروشگاه به‌روز می‌شود.','success');}
+   await AuthClient.request('session');
+   document.querySelector('#logout-account').hidden=false;
+   await announceSessionChange();
+   setAuthMessage(mode==='signup'?'حساب ایجاد شد و وارد شدی.':'ورود انجام شد.','success');
   }
  }catch(error){
-  setAuthMessage(error.message==='RATE_LIMITED'?'تعداد درخواست‌ها زیاد است. کمی بعد دوباره امتحان کن.':error.name==='AbortError'?'پاسخ سرویس طول کشید. اتصال اینترنت را بررسی و دوباره تلاش کن.':mode==='login'?'ورود انجام نشد. ایمیل و رمز یا اتصال سرویس را بررسی کن.':'درخواست انجام نشد. اتصال سرویس را بررسی و دوباره تلاش کن.','error');
+  setAuthMessage(error.message==='RESET_NOT_CONFIGURED'?'ارسال ایمیل بازیابی هنوز تنظیم نشده است.':error.message==='EMAIL_EXISTS'?'این ایمیل قبلاً ثبت شده است. برای ورود از فرم ورود استفاده کن.':error.message==='RATE_LIMITED'?'تعداد درخواست‌ها زیاد است. کمی بعد دوباره امتحان کن.':error.name==='AbortError'?'پاسخ سرویس طول کشید. اتصال اینترنت را بررسی و دوباره تلاش کن.':mode==='login'?'ورود انجام نشد. ایمیل و رمز یا اتصال سرویس را بررسی کن.':'درخواست انجام نشد. اتصال سرویس را بررسی و دوباره تلاش کن.','error');
  }finally{delete payload.password;clearSecrets();setAuthBusy(false);document.querySelector('#auth-status').focus({preventScroll:true});}
 });
 window.addEventListener('popstate',()=>{if(authBusy){history.replaceState({},'',location.pathname+'?mode='+authMode);return;}const mode=new URLSearchParams(location.search).get('mode');setAuthMode(Object.hasOwn(modeCopy,mode)?mode:'login',false);});
 window.addEventListener('pagehide',clearSecrets);
-if(AuthClient.enabled){document.querySelector('#auth-disclosure').textContent='ورود از طریق سرویس امن فروشگاه؛ رمز در این مرورگر ذخیره نمی‌شود.';document.querySelector('.auth-footer>span').textContent='حساب کاربری بقچه';}
+if(AuthClient.enabled){
+ const logout=document.querySelector('#logout-account');
+ document.querySelector('#auth-disclosure').hidden=true;
+ document.querySelector('.auth-footer>span').textContent='حساب کاربری بقچه';
+ AuthClient.request('session').then(()=>{logout.hidden=false;}).catch(()=>{});
+ logout.addEventListener('click',async()=>{
+  if(authBusy)return;
+  setAuthBusy(true);logout.disabled=true;
+  try{
+   await AuthClient.request('logout');
+   logout.hidden=true;
+   await announceSessionChange();
+   setAuthMessage('از حساب خارج شدی.','notice');
+  }catch{setAuthMessage('خروج از حساب انجام نشد. دوباره تلاش کن.','error');}
+  finally{setAuthBusy(false);logout.disabled=false;}
+ });
+}
 const initialMode=new URLSearchParams(location.search).get('mode');setAuthMode(Object.hasOwn(modeCopy,initialMode)?initialMode:'login',false);
 
 // Progressive enhancement: keep submission disabled if the controller fails to load.
-document.querySelector('.auth-submit').disabled=false;
+document.querySelector('.auth-submit').disabled=!AuthClient.enabled;

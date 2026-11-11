@@ -46,7 +46,7 @@ test('signup wave and login nod use different head/wrist motion',()=>{
 });
 test('surprise and gaze precede escape, with a click-friendly notice interval',()=>{
  const c=setup(),x=c.x;c.pointer(x+80+70,75,-5,0);
- const early=advance(c,120);assert.equal(c.state,'notice');near(c.x,x);assert.equal(early.emotion,'surprised');assert.ok(early.face.eyeL>1);assert.ok(early.face.gaze.x>0);
+ const early=advance(c,120);assert.equal(c.state,'notice');near(c.x,x);assert.equal(early.emotion,'surprised');assert.ok(early.face.eyeL>1);assert.ok(early.face.gaze.x>0);assert.ok(early.face.smile<0);assert.ok(early.face.browL<0);
  advance(c,400);assert.equal(c.state,'run');assert.ok(c.v<0);assert.ok(c.x<x);
 });
 test('escape direction uses actual side and recent movement over the body',()=>{

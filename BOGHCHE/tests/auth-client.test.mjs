@@ -4,18 +4,18 @@ import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 const source=await readFile(new URL('../dist/auth-client.js',import.meta.url),'utf8');
 function client({enabled=false,fetch}={}){
- const context=vm.createContext({fetch,setTimeout,clearTimeout,AbortController,window:{addEventListener(){}},document:{documentElement:{dataset:{}}},Object,Error});
- vm.runInContext(enabled?source.replace('BOGHCHE_AUTH_ENABLED = false','BOGHCHE_AUTH_ENABLED = true'):source,context);
+ const context=vm.createContext({location:{protocol:enabled?'https:':'file:'},fetch,setTimeout,clearTimeout,AbortController,window:{addEventListener(){}},document:{documentElement:{dataset:{}}},Object,Error});
+ vm.runInContext(source,context);
  return vm.runInContext('AuthClient',context);
 }
-test('the shipped demo never sends credentials to a network endpoint',async()=>{
+test('a directly opened file never sends credentials to a network endpoint',async()=>{
  let calls=0;const api=client({fetch:async()=>{calls++;}});
  await assert.rejects(api.request('login',{email:'test@example.com',password:'TestValue123'}),/AUTH_NOT_CONFIGURED/);
  assert.equal(calls,0);
 });
 test('enabled adapter uses same-origin cookies and a CSRF header, with credentials only in the POST body',async()=>{
  const requests=[];
- const api=client({enabled:true,fetch:async(url,options)=>{requests.push({url,options:{...options}});return {ok:true,json:async()=>url.endsWith('/csrf')?{token:'csrf-test'}:{user:{name:'Test',email:'test@example.com'}}};}});
+ const api=client({enabled:true,fetch:async(url,options)=>{requests.push({url,options:{...options,headers:{...options.headers}}});return {ok:true,json:async()=>url.endsWith('/csrf')?{token:'csrf-test'}:{user:{name:'Test',email:'test@example.com'}}};}});
  const result=await api.request('login',{email:'test@example.com',password:'TestValue123',remember:true});
  assert.equal(result.user.name,'Test');assert.equal(requests.length,2);
  assert.equal(requests[0].url,'/api/auth/csrf');assert.equal(requests[1].url,'/api/auth/login');

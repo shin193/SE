@@ -2,7 +2,7 @@
  const button=document.querySelector('#auth-mascot'),lane=document.querySelector('.mascot-lane');
  if(!button||!lane)return;
  const clock=new MascotMotion.Clock({seed:Date.now()}),reduced=matchMedia('(prefers-reduced-motion: reduce)'),fine=matchMedia('(hover:hover) and (pointer:fine)');
- const parts={body:button.querySelector('.rig-torso'),head:button.querySelector('.rig-head'),face:button.querySelector('.rig-face'),legs:[...button.querySelectorAll('[data-leg]')],arms:[button.querySelector('.rig-left'),button.querySelector('.rig-right')],eyes:[button.querySelector('.eye-left'),button.querySelector('.eye-right')],pupils:button.querySelectorAll('.spool-pupil'),cheeks:button.querySelectorAll('.spool-cheek'),brows:button.querySelector('.spool-brows'),lids:button.querySelector('.spool-lids'),mouth:button.querySelector('.spool-smile'),tongue:button.querySelector('.spool-tongue'),shadow:button.querySelector('.mascot-ground')};
+ const parts={body:button.querySelector('.rig-torso'),head:button.querySelector('.rig-head'),face:button.querySelector('.rig-face'),legs:[...button.querySelectorAll('[data-leg]')],arms:[button.querySelector('.rig-left'),button.querySelector('.rig-right')],eyes:[button.querySelector('.eye-left'),button.querySelector('.eye-right')],pupils:button.querySelectorAll('.spool-pupil'),brows:button.querySelector('.spool-brows'),lids:button.querySelector('.spool-lids'),mouth:button.querySelector('.spool-smile'),shadow:button.querySelector('.mascot-ground')};
  let raf=0,timer=0,lastTime=null,neutral,scale=1,lastPointer=null;
  const fmt=n=>Number(n.toFixed(3)),pt=p=>fmt(p.x)+' '+fmt(p.y);
  function measure(){
@@ -31,13 +31,11 @@
   parts.eyes[0].setAttribute('transform','translate(66 70) scale(1 '+fmt(quiet?.95:Math.max(.04,f.eyeL))+')');
   parts.eyes[1].setAttribute('transform','translate(91 70) scale(1 '+fmt(quiet?.95:Math.max(.04,f.eyeR))+')');
   parts.pupils.forEach(el=>el.setAttribute('transform','translate('+fmt(quiet?0:g.x)+' '+fmt(quiet?0:g.y)+')'));
-  parts.cheeks.forEach(el=>el.style.opacity=String(f.cheek));
   const yL=60+f.browL,yR=60+f.browR,eyeL=quiet?.95:f.eyeL,eyeR=quiet?.95:f.eyeR;
   parts.brows.setAttribute('d','M60 '+fmt(yL+f.angleL)+'Q66 '+fmt(yL-3)+' 72 '+fmt(yL-f.angleL)+'M85 '+fmt(yR-f.angleR)+'Q91 '+fmt(yR-3)+' 97 '+fmt(yR+f.angleR));
   parts.lids.setAttribute('d','M61 '+fmt(70-6*eyeL)+'Q66 '+fmt(68-6*eyeL)+' 71 '+fmt(70-6*eyeL)+'M86 '+fmt(70-6*eyeR)+'Q91 '+fmt(68-6*eyeR)+' 96 '+fmt(70-6*eyeR));
   const w=f.width,y=81,smile=f.smile,open=f.open;
   parts.mouth.setAttribute('d','M'+fmt(79-w)+' '+y+'Q79 '+fmt(y+smile*5)+' '+fmt(79+w)+' '+y+'Q79 '+fmt(y+smile*5+open*12)+' '+fmt(79-w)+' '+y+'Z');
-  parts.tongue.setAttribute('d','M'+fmt(79-w*.48)+' '+fmt(y+smile*3+open*7)+'Q79 '+fmt(y+smile*3+open*10)+' '+fmt(79+w*.48)+' '+fmt(y+smile*3+open*7));parts.tongue.style.opacity=String(open*.7);
   parts.shadow.style.transform='scaleX('+(quiet?1:1-(p.jump+p.flight*4)/95)+')';parts.shadow.style.opacity=String(.62-(quiet?0:(p.jump+p.flight*4)/70));
   button.dataset.phase=p.phase;button.dataset.resumePhase=p.resumePhase;button.dataset.reaction=p.reaction;button.dataset.emotion=p.emotion;button.dataset.gait=p.cycleKind;button.dataset.walking=String(!quiet&&p.walking);
  }

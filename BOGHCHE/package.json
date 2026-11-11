@@ -1,12 +1,19 @@
 {
   "name": "boghche",
-  "version": "7.0.0",
+  "version": "8.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node serve.mjs",
     "dev": "node serve.mjs",
     "check": "node --check dist/app.js && node --check dist/theme.js && node --check dist/features.js && node --check dist/auth.js && node --check dist/auth-client.js && node --check dist/account-sync.js && node --check dist/mascot-motion.js && node --check dist/mascot.js",
-    "test": "node --test tests/auth-client.test.mjs tests/greeting.test.mjs"
+    "test": "node --test tests/auth-client.test.mjs tests/greeting.test.mjs",
+    "migrate": "node migrate.mjs"
+  },
+  "dependencies": {
+    "pg": "^8.23.1"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

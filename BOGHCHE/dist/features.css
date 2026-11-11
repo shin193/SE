@@ -12,3 +12,70 @@ body,header,footer,section,article,dialog,button,a,input,select,textarea,.produc
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
 
 .review-delete{font-size:10px;color:var(--rust);text-decoration:underline;text-underline-offset:3px;padding:4px 8px}.review-delete:hover{background:var(--cream);border-radius:5px}
+
+/* Category disclosures share the same thumbnail grid on both layouts. */
+#category-menu {
+  width: min(540px, calc(100vw - 48px));
+  padding: 16px;
+  z-index: 2;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity .16s ease, transform .16s ease, visibility .16s;
+}
+#category-menu[data-open="true"] { opacity: 1; visibility: visible; transform: none; }
+.category-menu-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.category-menu-grid .category-tile {
+  display: flex; align-items: center; gap: 9px; min-height: 58px; padding: 6px;
+  border: 1px solid var(--line); border-radius: 8px; font-size: 11px; line-height: 1.65;
+}
+.category-tile:hover, .category-tile:focus-visible { background: var(--cream); }
+.category-tile-image {
+  display: grid; place-items: center; overflow: hidden; flex: 0 0 40px;
+  width: 40px; height: 40px; border-radius: 5px; background: var(--soft);
+}
+.all-products-link {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 4px 2px; color: var(--olive); font-size: 12px;
+}
+.all-products-link svg, .category-tile-image svg, #mobile-products-menu svg { width: 18px; height: 18px; }
+#mobile-nav #mobile-products-menu { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+#mobile-categories { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .18s ease, opacity .18s ease; }
+#mobile-categories[data-open="true"] { grid-template-rows: 1fr; opacity: 1; }
+#mobile-categories > div { overflow: hidden; min-height: 0; }
+#mobile-nav .category-menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 3px; }
+#mobile-nav .category-tile { display: flex; font-size: 11px; }
+#mobile-nav .category-tile > :last-child { min-width: 0; overflow-wrap: anywhere; }
+#mobile-nav .all-products-link { display: flex; min-height: 44px; }
+#catalog { scroll-margin-top: 100px; }
+
+/* Press feedback is applied before the native click opens the detail view. */
+.product-card { transition: transform .10s ease; }
+.product-card:has(.photo-button:active, .product-title:active) { transform: scale(.981); }
+.product-image { transition: box-shadow .18s ease; }
+.product-image:has(.photo-button:focus-visible) { box-shadow: 0 0 0 2px var(--olive); }
+.photo-button:focus-visible { outline: 2px solid var(--olive); outline-offset: -3px; }
+.photo-button .product-photo { transition: transform .24s ease; }
+.photo-button:hover .product-photo { transform: translateY(-50%); }
+@media (hover:hover) and (pointer:fine) {
+  .photo-button:hover .product-photo { transform: translateY(-50%) scale(1.055); }
+  .product-image:has(.photo-button:hover) { box-shadow: 0 0 0 1px var(--line), 0 7px 20px #30372d18; }
+}
+.card-arrival .gallery-main { animation: card-release .16s ease-out; }
+@keyframes card-release { from { transform: scale(.981); } to { transform: scale(1); } }
+@media (prefers-reduced-motion:reduce) {
+  .product-card:has(.photo-button:active, .product-title:active) { transform: none; }
+  .photo-button:hover .product-photo { transform: translateY(-50%); }
+  .card-arrival .gallery-main { animation: none; }
+  #category-menu { transform: none; }
+}
+
+.product-card { position: relative; }
+.product-title::after { content: ''; position: absolute; inset: 0; z-index: 1; }
+.product-card .photo-button { z-index: 2; }
+.product-card .product-badge { z-index: 3; pointer-events: none; }
+.product-card :is(.favorite-toggle, .quick-add) { z-index: 4; }
+.product-photo[src] { display: block; background: none; object-fit: cover; }
+.photo-placeholder { display: grid; place-items: center; height: 100%; color: var(--muted); }
+
+.footer-brand p { margin-top: 10px; }

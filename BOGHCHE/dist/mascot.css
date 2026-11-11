@@ -4,12 +4,12 @@
 .mascot-button:focus-visible{outline:2px solid var(--olive);outline-offset:3px;background:color-mix(in srgb,var(--soft) 50%,transparent)}.mascot-button:after{content:'';position:absolute;inset:15px 6px 2px;border-radius:18px;border:1px dashed var(--line);opacity:0;transition:opacity .2s ease;pointer-events:none;z-index:-1}
 .mascot-hover,.mascot-pose{display:block;width:100%;height:100%}.mascot-button .spool-character{width:100%;height:100%;display:block;opacity:1;visibility:visible;animation:none;filter:drop-shadow(0 1px 1px #fff5e9) drop-shadow(0 1px 1px #20394c50);fill:none;stroke:none;overflow:visible}
 .mascot-ground{position:absolute;width:42px;height:4px;background:#263f5022;border:1px solid #fff6e866;border-radius:50%;top:100px;left:31px;pointer-events:none;transform-origin:center}
-.knee-stitch{fill:var(--spool-cap);stroke:var(--spool-ink);stroke-width:1}.spool-cheek{transition:none}.rig-arm,.rig-legs,.rig-torso,.rig-head{animation:none}
+.knee-stitch{fill:var(--spool-cap);stroke:var(--spool-ink);stroke-width:1}.rig-arm,.rig-legs,.rig-torso,.rig-head{animation:none}
 @media(hover:hover) and (pointer:fine){.mascot-button:hover:after{opacity:1}.mascot-button:hover .spool-brows{stroke-width:1.8}}
 .auth-shell[data-mode=forgot] .form-heading h1{max-width:58%;font-size:27px}
 @media(max-width:700px){.form-heading{min-height:118px}.form-heading h1{font-size:28px;max-width:58%}.mascot-button{top:0;width:88px;height:94px}.mascot-ground{left:27px;width:34px;top:86px}.auth-shell[data-mode=forgot] .form-heading h1{font-size:24px}.form-heading>p{font-size:10px}}
 @media(max-width:370px){.form-heading{min-height:114px}.form-heading h1{font-size:26px}.mascot-button{width:82px;height:88px}.mascot-ground{width:32px;left:25px;top:80px}.auth-shell[data-mode=forgot] .form-heading h1{font-size:21px}}
-@media(prefers-reduced-motion:reduce){.mascot-button,.spool-cheek{transition:none!important}.mascot-button .spool-character{opacity:1}}
+@media(prefers-reduced-motion:reduce){.mascot-button{transition:none!important}.mascot-button .spool-character{opacity:1}}
 /* Enamel is deliberately complementary to each theme, never --olive. */
 .sewing-scene{--machine-enamel:#486e98;--machine-edge:#253e5b;--machine-detail:#fff2dc;--machine-metal:#31424c}
 :root[data-theme=clay] .sewing-scene{--machine-enamel:#2e709e;--machine-edge:#183e63;--machine-detail:#eaf8ff;--machine-metal:#263b50}
@@ -23,4 +23,4 @@
 
 .auth-shell[data-mode=forgot] .form-heading h1{width:84px;max-width:84px;line-height:1.55}
 
-.eye-left,.eye-right,.spool-brows,.spool-lids,.spool-smile,.spool-pupil{animation:none;transition:none}.mascot-lane{contain:layout style}.mascot-button{touch-action:pan-y pinch-zoom}.spool-tongue{pointer-events:none}
+.eye-left,.eye-right,.spool-brows,.spool-lids,.spool-smile,.spool-pupil{animation:none;transition:none}.mascot-lane{contain:layout style}.mascot-button{touch-action:pan-y pinch-zoom}
