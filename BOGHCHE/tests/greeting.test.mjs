@@ -126,3 +126,135 @@ test('machine enamel stays distinct on all four light surfaces and a dark refere
 test('a narrow lane permits one edge bounce, then rests until the pointer moves again',()=>{const c=new Clock();c.setLayout(45,.5125);c.pointer(c.x+100,76,-4,0);advance(c,8000);assert.equal(c.state,'calm');near(c.v,0);assert.ok(c.bounces<=1);const x=c.x;advance(c,3000);near(c.x,x);});
 
 test('run flight and jumping cannot stretch either leg past its anatomical length',()=>{const c=setup();c.pointer(c.x+150,76,-5,0);for(let t=0;t<7000;t+=4){const p=c.advance(4);p.legs.forEach(l=>assert.ok(length(l.hip,l.ankle)<=47.001));}c.leave();c.react(0);for(let t=0;t<1120;t+=4)c.advance(4).legs.forEach(l=>assert.ok(length(l.hip,l.ankle)<=47.001));});
+
+// Approximate a 60 Hz render at normal speed and at quarter-speed playback.
+const playbackSteps=[16,4];
+
+function samplePhase(clock,phase,step){
+ const frames=[];
+ for(let time=0;time<6500;time+=step){
+  const pose=clock.advance(step);
+  if(pose.phase===phase)frames.push({pose,body:clock.bodyFacing});
+  else if(frames.length)break;
+ }
+ assert.ok(frames.length,phase+' should occur');
+ return frames;
+}
+
+function checkPlantedFeet(previous,current){
+ current.legs.forEach((leg,index)=>{
+  if(!leg.contact)return;
+  near(leg.worldY,ground);
+  if(previous.legs[index].contact)near(leg.worldX,previous.legs[index].worldX);
+ });
+}
+
+const range=values=>Math.max(...values)-Math.min(...values);
+
+test('signup raises the palm, waves twice from the wrist, then lowers the arm',()=>{
+ for(const step of playbackSteps){
+  const clock=setup();
+  clock.request('signup');
+  const arms=samplePhase(clock,'greet',step).map(frame=>frame.pose.rightArm);
+  const peaks=arms.map((arm,index)=>
+   index>0&&index<arms.length-1&&arm.wrist>arms[0].wrist+35&&
+   arm.wrist>arms[index-1].wrist&&arm.wrist>=arms[index+1].wrist?index:-1
+  ).filter(index=>index>=0);
+  assert.equal(peaks.length,2,'wrist crests at '+step+' ms');
+  assert.ok(arms[0].hand.y>arms[0].elbow.y);
+  assert.ok(arms.at(-1).hand.y>arms.at(-1).elbow.y);
+  const raised=arms.map((arm,index)=>arm.hand.y<arm.shoulder.y?index:-1).filter(index=>index>=0);
+  assert.ok(raised.length*step>350,'the wave needs a raised pose between transitions');
+  for(const arm of arms.slice(raised[0],raised.at(-1)+1)){
+   assert.ok(arm.elbow.y>arm.shoulder.y&&arm.elbow.y-arm.shoulder.y<20);
+   assert.ok(Math.abs(arm.elbow.x-arm.shoulder.x)<10,'elbow stays near the torso');
+   assert.ok(arm.hand.y<arm.elbow.y-8,'palm clears the elbow');
+  }
+  const beat=arms.slice(peaks[0],peaks[1]+1);
+  const forearmAngle=arm=>Math.atan2(arm.hand.x-arm.elbow.x,arm.elbow.y-arm.hand.y)*180/Math.PI;
+  assert.ok(range(beat.map(arm=>arm.wrist))>3*range(beat.map(forearmAngle)));
+ }
+});
+
+test('turns lead with the eyes and head, then pivot over a stationary support foot',()=>{
+ for(const step of playbackSteps){
+  for(const phase of ['turn-home','edge-turn']){
+   const clock=setup();
+   if(phase==='turn-home')clock.request('signup');
+   else{
+    clock.setLayout(65,.65);
+    clock.pointer(clock.x+150,76,-5,0);
+   }
+   const frames=samplePhase(clock,phase,step);
+   const first=frames[0],last=frames.at(-1);
+   const direction=Math.sign(last.body);
+   const gaze=frames.findIndex(frame=>direction*frame.pose.face.gaze.x>.15);
+   const head=frames.findIndex(frame=>direction*frame.pose.facing>.025);
+   const body=frames.findIndex(frame=>direction*frame.body>.025);
+   assert.ok(gaze>=0&&gaze<head&&head<body,phase+' eyes, head and body should follow in order');
+   const lift=frames.findIndex(frame=>frame.pose.legs.some(leg=>leg.worldY<ground-.25));
+   assert.ok(lift>0,phase+' needs a visible pivot step');
+   const swing=frames[lift].pose.legs.findIndex(leg=>!leg.contact);
+   const support=1-swing;
+   const weight=frames.findIndex(({pose})=>
+    (pose.pelvis.x-80)*Math.sign(pose.legs[support].worldX-pose.root)>.25
+   );
+   assert.ok(weight>=0&&weight<lift,'weight shifts before the pivot foot lifts');
+   for(let index=1;index<frames.length;index++){
+    const previous=frames[index-1].pose,current=frames[index].pose;
+    checkPlantedFeet(previous,current);
+    assert.equal(current.legs[support].contact,true);
+    near(current.legs[support].worldX,first.pose.legs[support].worldX);
+   }
+   const distance=Math.abs(last.pose.legs[swing].worldX-first.pose.legs[swing].worldX);
+   assert.ok(distance>2&&distance<10,'the lifted foot lands one short step away');
+   assert.equal(last.pose.legs[swing].contact,true);
+  }
+ }
+});
+
+test('hop gathers and pushes off, slows at the apex, then lands and flexes on pinned feet',()=>{
+ for(const step of playbackSteps){
+  const clock=setup();
+  const rest=clock.pose();
+  clock.react(0);
+  const frames=[clock.pose()];
+  for(let time=0;time<1120;time+=step)frames.push(clock.advance(step));
+  const takeoff=frames.findIndex(pose=>pose.legs.every(leg=>!leg.contact));
+  assert.ok(takeoff>1,'a grounded preparation precedes the hop');
+  const landing=frames.findIndex((pose,index)=>index>takeoff&&pose.legs.every(leg=>leg.contact));
+  assert.ok(landing>takeoff+4,'the hop has a flight interval');
+  const preparation=frames.slice(0,takeoff);
+  assert.ok(preparation.every(pose=>pose.legs.every(leg=>leg.contact)));
+  const crouchY=Math.max(...preparation.map(pose=>pose.pelvis.y));
+  assert.ok(crouchY>rest.pelvis.y+2);
+  assert.ok(preparation.at(-1).pelvis.y<crouchY-2,'legs extend before leaving the floor');
+
+  const flight=frames.slice(takeoff,landing);
+  const apexY=Math.min(...flight.map(pose=>pose.pelvis.y));
+  const apex=flight.findIndex(pose=>pose.pelvis.y===apexY);
+  const lift=rest.pelvis.y-apexY;
+  assert.ok(lift>8&&lift<20,'hop height stays modest');
+  assert.ok(apex>0&&apex<flight.length-1);
+  assert.ok(flight.every(pose=>pose.legs.every(leg=>!leg.contact&&leg.worldY<ground)));
+  const change=(left,right)=>Math.abs(flight[left].pelvis.y-flight[right].pelvis.y);
+  const nearApex=Math.max(change(apex-1,apex),change(apex,apex+1));
+  assert.ok(nearApex<.45*Math.min(change(0,1),change(flight.length-2,flight.length-1)));
+
+  const recovery=frames.slice(landing);
+  const impactY=Math.max(...recovery.map(pose=>pose.pelvis.y));
+  const impact=recovery.findIndex(pose=>pose.pelvis.y===impactY);
+  assert.ok(impact>0&&impactY>recovery[0].pelvis.y+1,'the body compresses after the feet touch');
+  for(const leg of recovery[impact].legs){
+   const dx=leg.ankle.x-leg.hip.x,dy=leg.ankle.y-leg.hip.y;
+   const bend=Math.abs(dx*(leg.knee.y-leg.hip.y)-dy*(leg.knee.x-leg.hip.x))/Math.hypot(dx,dy);
+   assert.ok(bend>.75,'landing knee visibly bends even in front view');
+  }
+  for(let index=1;index<frames.length;index++){
+   checkPlantedFeet(frames[index-1],frames[index]);
+   near(frames[index].root,rest.root);
+  }
+  near(frames.at(-1).pelvis.y,rest.pelvis.y);
+  frames.at(-1).legs.forEach((leg,index)=>near(leg.worldX,rest.legs[index].worldX));
+ }
+});
